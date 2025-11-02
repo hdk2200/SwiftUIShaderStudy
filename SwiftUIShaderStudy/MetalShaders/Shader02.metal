@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2025,  All rights reserved. 
+// Copyright (c) 2025, All rights reserved.
 // 
 //
 #include <metal_stdlib>
@@ -9,125 +9,90 @@ using namespace metal;
 #include "../MetalCommon/shadersample_internal.h"
 
 #define M_PI 3.14159265359
-//
-//fragment float4 shader02_01(VertexOut data [[stage_in]],
-//                                           float2 uv [[point_coord]],
-//                                           constant ShaderCommonUniform *uniform [[buffer(0)]])
-//{
-//  // -1.0 ~ 1.0 に正規化されたスクリーン座標を計算
-//  float2 pos = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
-//
-//
-//  // 上位から渡された時間
-//  float tm = uniform->time;
-//
-//
-//  // スクリーン上のZ位置（基本的に0）
-//  float zPos = 0.0;
-//
-//
-//
-////  float xy = fract(pos[0] * pos[1] );
-////  float x = fract(pos[0] * 100) ;
-////  float y = fract(pos[1] * 100);
-////  float x = fmod(pos[0] * 10000,32) ;
-////  float y = fmod(pos[1] * 10000,32) ;
-//  float2 xy2 = pos / 0.01;
-//
-//  float xMod = fmod( pos.x, 3.0);
-//  float yMod = fmod( pos.y , 3.0);
-//
-//
-//  //  float k = sin(xMod  yMod);  // ベースカラーと初期カラー設定
-//  float3 baseColor = float3(0.8, 0.8, 0.9);
-//  float tm1 = sin(tm);
-//  float r = sin(tm ) * xy2[0] ;
-//  float g = cos(tm ) * xy2[1] ;
-//  float b = cos(tm) ;
-//  float3 color = float3(r,g,b);
-//
-////  return float4(baseColor, 1.0);
-//  return float4(color, 1.0);
-//}
-//
-////
-//// Copyright (c) 2025, All rights reserved.
-////
-////
-//#include <metal_stdlib>
-//using namespace metal;
-//
-//#include "../MetalCommon/shaderSample.h"
-//#include "../MetalCommon/shadersample_internal.h"
-//
-//#define M_PI 3.14159265359
-//
-//// ヘルパー関数: 距離計算で円を描く
-//float circle(float2 p, float r) {
-//    return length(p) - r;
-//}
-//
-//// ヘルパー関数: ボックスを描く
-//float box(float2 p, float2 b) {
-//    float2 d = abs(p) - b;
-//    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+
+//// スムーズなステップ補間
+//float smoothstep(float edge0, float edge1, float x) {
+//    float t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+//    return t * t * (3.0 - 2.0 * t);
 //}
 
-// ヘルパー関数: 距離計算で円を描く
+// 円
 float circle(float2 p, float r) {
-return length(p) - r;
+    return length(p) - r;
 }
-// ヘルパー関数: ボックスを描く
+
+// ボックス
 float box(float2 p, float2 b) {
-float2 d = abs(p) - b;
-return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+    float2 d = abs(p) - b;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
 }
+
+// 十字
+float cross(float2 p, float w) {
+    return min(abs(p.x), abs(p.y)) - w;
+}
+
 fragment float4 shader02_01(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
-    // -1.0 ~ 1.0 に正規化されたスクリーン座標を計算
+    // 正規化スクリーン座標 (-1 ~ 1)
     float2 pos = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
-
-    // 上位から渡された時間
     float tm = uniform->time;
 
-    // スクリーン上のZ位置（基本的に0）
-    float zPos = 0.0;
+    // === 1. グリッドサイズを滑らかにアニメーション ===
+    float baseGrid = 0.5;
+    float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
+    float gridSize = baseGrid + gridPulse;
 
-    // メッシュ化: グリッドサイズを設定（時間で変動させる）
-    float gridSize = 0.2 + 0.1 * sin(tm * 2.0); // 時間でグリッドサイズをアニメーション
-    float2 gridPos = fract(pos / gridSize); // 各セル内の相対位置 (0.0 ~ 1.0)
-    float2 cellCenter = float2(0.5, 0.5); // セルの中心
+    // グリッドの「位相」を時間でずらして流れるように
+    float2 gridOffset = float2(sin(tm * 0.7), cos(tm * 0.5)) * 0.3;
+    float2 gridPos = fract((pos + gridOffset) / gridSize);
+    float2 cellCenter = float2(0.5, 0.5);
 
-    // 各セルで幾何学的な表現: 時間によって形状を変える
+    // === 2. 形状を滑らかにブレンド（3種類を時間で補間）===
+    float cycle = 12.0; // 1サイクル秒数
+    float t = fract(tm / cycle); // 0~1 の正規化時間
+
+    // 各形状のSDF
+    float shapeCircle = circle(gridPos - cellCenter, 0.3 + 0.08 * sin(tm * 2.0));
+    float shapeBox    = box(gridPos - cellCenter, float2(0.25 + 0.1 * cos(tm), 0.35));
+    float shapeCross  = cross(gridPos - cellCenter, 0.08 + 0.05 * sin(tm * 3.0));
+
+    // 3つのフェーズに分けて滑らかにブレンド
     float shape;
-    float tmMod = fmod(tm, 3.0); // 3秒周期で形状を切り替え
-    if (tmMod < 1.0) {
-        // 円
-        shape = circle(gridPos - cellCenter, 0.3 + 0.1 * sin(tm));
-    } else if (tmMod < 2.0) {
-        // 四角
-        shape = box(gridPos - cellCenter, float2(0.3, 0.3) * (0.8 + 0.2 * cos(tm)));
+    if (t < 0.33) {
+        // 円 → ボックス
+        float localT = smoothstep(0.0, 0.33, t);
+        shape = mix(shapeCircle, shapeBox, localT);
+    } else if (t < 0.66) {
+        // ボックス → 十字
+        float localT = smoothstep(0.33, 0.66, t);
+        shape = mix(shapeBox, shapeCross, localT);
     } else {
-        // 十字（ラインの組み合わせ）
-        float lineWidth = 0.1 + 0.05 * sin(tm);
-        shape = min(abs(gridPos.x - 0.5), abs(gridPos.y - 0.5)) - lineWidth / 2.0;
+        // 十字 → 円
+        float localT = smoothstep(0.66, 1.0, t);
+        shape = mix(shapeCross, shapeCircle, localT);
     }
 
-    // 形状に基づいて色を決定
-    float3 color;
-    if (shape < 0.0) {
-        // 形状内: 時間で色を変える
-        color = float3(0.5 + 0.5 * sin(tm + pos.x), 0.5 + 0.5 * cos(tm + pos.y), 0.5 + 0.5 * sin(tm * 1.5));
-    } else {
-        // 形状外: 背景色
-        color = float3(0.1, 0.1, 0.2);
-    }
+    // === 3. 色も滑らかに変化 ===
+    float3 colorIn  = 0.5 + 0.5 * float3(
+        sin(tm + pos.x * 3.0),
+        sin(tm * 1.3 + pos.y * 2.0),
+        cos(tm * 1.7)
+    );
 
-    // グリッドラインを追加で描画（オプション）
-    float gridLine = smoothstep(0.01, 0.0, min(fract(pos.x / gridSize), fract(pos.y / gridSize)));
-    color = mix(color, float3(1.0, 1.0, 1.0), gridLine * 0.5);
+    float3 colorOut = float3(0.08, 0.1, 0.18); // 背景
+    float3 finalColor = mix(colorOut, colorIn, step(shape, 0.0));
 
-    return float4(color, 1.0);
+    // === 4. グリッド線を滑らかに（オプション）===
+    float2 gridLine = abs(fract((pos + gridOffset) / gridSize) - 0.5);
+    float lineMask = 1.0 - smoothstep(0.0, 0.03, min(gridLine.x, gridLine.y));
+    finalColor = mix(finalColor, float3(1.0, 1.0, 1.0), lineMask * 0.25);
+
+    // === 5. 全体に微かな波紋エフェクト（滑らかさを増す）===
+    float ripple = sin(length(pos) * 8.0 - tm * 4.0) * 0.02;
+    finalColor += ripple * (step(shape, 0.0) ? 1.0 : 0.3);
+
+    return float4(finalColor, 1.0);
 }
