@@ -32,8 +32,8 @@
 		20B155772EB755D900708C12 = {
 			isa = PBXGroup;
 			children = (
-				20B155822EB755D900708C12 /* SwiftUIShaderStudy */,
 				20B155812EB755D900708C12 /* Products */,
+				20B155822EB755D900708C12 /* SwiftUIShaderStudy */,
 			);
 			sourceTree = "<group>";
 		};

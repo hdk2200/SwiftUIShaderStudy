@@ -18,6 +18,7 @@ enum ShaderType: CaseIterable {
   case raymarching04
   case raymarching05
   case raymarching06
+  case shader02_01
 
   var name: String {
     switch self {
@@ -30,6 +31,7 @@ enum ShaderType: CaseIterable {
     case .raymarching04: return "Raymarching04(reduce arg)"
     case .raymarching05: return "Raymarching05"
     case .raymarching06: return "Raymarching06"
+    case .shader02_01: return "shader02_01"
     }
   }
 }

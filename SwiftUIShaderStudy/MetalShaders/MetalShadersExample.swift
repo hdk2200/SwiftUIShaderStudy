@@ -51,7 +51,7 @@ struct SettingsView: View {
 
 
 struct MetalShadersExample: View {
-  @State var shaderType: ShaderType = .raymarching06
+  @State var shaderType: ShaderType = .shader02_01
   @State private var showSettings = false
   @State private var fps: Double = 0.0
 

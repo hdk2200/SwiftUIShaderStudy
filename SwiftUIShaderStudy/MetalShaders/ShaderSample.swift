@@ -174,6 +174,15 @@ class ShaderSampleRenderer: NSObject {
           vertexFunc: "shaderSampleVertex",
           fragmentFunc: "shaderSampleRayMarching06",
           colorPixelFormat: mtkView.colorPixelFormat)
+        
+      case .shader02_01:
+        pipelineState = createRenderPipelineState(
+          device: device,
+          label: "shader01",
+          vertexFunc: "shaderSampleVertex",
+          fragmentFunc: "shader02_01",
+          colorPixelFormat: mtkView.colorPixelFormat)
+
       }
         pipelineStates[type] = pipelineState
 
