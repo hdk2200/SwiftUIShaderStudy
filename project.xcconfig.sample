@@ -1,0 +1,35 @@
+// ### Simplified Xcode Project Setup
+// 
+// 1. Copy this to project.xcconfig :
+// 2. Link `.xcconfig` to Xcode:
+//    Open project in Xcode, select target, go to Info tab.
+//    Under Configurations, add project.xcconfig for Debug/Release.
+//    Alternatively, in Build Settings, set Configuration File to project.xcconfig.
+// 3. Xcode
+//    - In `Build Settings`, set:
+//      - `CURRENT_PROJECT_VERSION = $(CURRENT_PROJECT_VERSION)`
+//      - `DEVELOPMENT_TEAM = $(DEVELOPMENT_TEAM)`
+//      - `PRODUCT_BUNDLE_IDENTIFIER = $(PRODUCT_BUNDLE_IDENTIFIER)`
+// 
+// 4. Update `.gitignore`:
+//    - Add to `.gitignore`:
+//      ```
+//      project.xcconfig
+//      *.xcuserstate
+//      *.xcuserdata
+//      ```
+// project.xcconfig.sample
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+// Specifies the current project version (used for versioning the build).
+// Replace '1' with the appropriate version number for your project.
+CURRENT_PROJECT_VERSION = 1
+
+// Specifies the Apple Developer Team ID for code signing.
+// Replace '000000' with your actual Team ID from the Apple Developer Portal (found in Xcode > Preferences > Accounts).
+DEVELOPMENT_TEAM = 000000
+
+// Defines the Bundle Identifier for the app.
+// Replace 'com.example.myapp' with your app's unique identifier (e.g., com.yourcompany.appname).
+PRODUCT_BUNDLE_IDENTIFIER = com.example.myapp
