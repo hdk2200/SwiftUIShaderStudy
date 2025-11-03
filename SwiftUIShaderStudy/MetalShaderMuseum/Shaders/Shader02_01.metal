@@ -5,16 +5,11 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#include "../MetalCommon/shaderSample.h"
-#include "../MetalCommon/shadersample_internal.h"
+#include "../../MetalCommon/shaderSample.h"
+#include "../../MetalCommon/shadersample_internal.h"
 
 #define M_PI 3.14159265359
 
-//// スムーズなステップ補間
-//float smoothstep(float edge0, float edge1, float x) {
-//    float t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-//    return t * t * (3.0 - 2.0 * t);
-//}
 
 // 円
 float circle(float2 p, float r) {
@@ -41,7 +36,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float tm = uniform->time;
 
     // === 1. グリッドサイズを滑らかにアニメーション ===
-    float baseGrid = 0.5;
+    float baseGrid = 0.60;
     float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
     float gridSize = baseGrid + gridPulse;
 
@@ -51,12 +46,12 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float2 cellCenter = float2(0.5, 0.5);
 
     // === 2. 形状を滑らかにブレンド（3種類を時間で補間）===
-    float cycle = 12.0; // 1サイクル秒数
+    float cycle = 6.0; // 1サイクル秒数
     float t = fract(tm / cycle); // 0~1 の正規化時間
 
     // 各形状のSDF
-    float shapeCircle = circle(gridPos - cellCenter, 0.3 + 0.08 * sin(tm * 2.0));
-    float shapeBox    = box(gridPos - cellCenter, float2(0.25 + 0.1 * cos(tm), 0.35));
+    float shapeCircle = circle(gridPos - cellCenter, 0.3 + 0.18 * sin(tm * 2.0));
+    float shapeBox    = box(gridPos - cellCenter, float2(0.25 + 0.2 * cos(tm), 0.35));
     float shapeCross  = cross(gridPos - cellCenter, 0.08 + 0.05 * sin(tm * 3.0));
 
     // 3つのフェーズに分けて滑らかにブレンド

@@ -9,7 +9,8 @@ import SwiftUI
 struct SwiftUIShaderStudyApp: App {
     var body: some Scene {
         WindowGroup {
-          MetalShadersExample()
+//          MetalShadersExample()
+          MetalSharderMuseum()
         }
     }
 }
