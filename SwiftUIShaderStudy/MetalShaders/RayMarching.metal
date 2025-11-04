@@ -6,7 +6,7 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#include "../MetalCommon/shaderSample.h"
+#include "../MetalCommon/ShaderCommonUniform.h"
 #include "../MetalCommon/shadersample_internal.h"
 
 #define M_PI 3.14159265359

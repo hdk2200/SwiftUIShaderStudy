@@ -5,7 +5,7 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#include "../../MetalCommon/shaderSample.h"
+#include "../../MetalCommon/ShaderCommonUniform.h"
 #include "../../MetalCommon/shadersample_internal.h"
 
 #define M_PI 3.14159265359
@@ -36,7 +36,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float tm = uniform->time;
 
     // === 1. グリッドサイズを滑らかにアニメーション ===
-    float baseGrid = 0.60;
+    float baseGrid = 1.0 * uniform->scale;
     float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
     float gridSize = baseGrid + gridPulse;
 

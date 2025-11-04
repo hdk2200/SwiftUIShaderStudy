@@ -2,7 +2,7 @@
 
 #include <metal_stdlib>
 
-#include "../MetalCommon/shaderSample.h"
+#include "../MetalCommon/ShaderCommonUniform.h"
 #include "../MetalCommon/shadersample_internal.h"
 using namespace metal;
 

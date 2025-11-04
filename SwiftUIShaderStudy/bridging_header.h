@@ -8,7 +8,7 @@
 
 #import "AAPLShaderTypes.h"
 //#import "particleShader.h"
-#import "shaderSample.h"
+#import "ShaderCommonUniform.h"
 //#import "MetalTexture.h"
 
 #endif /* bridging_header_h */
