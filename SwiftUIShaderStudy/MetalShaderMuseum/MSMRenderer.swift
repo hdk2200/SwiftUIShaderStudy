@@ -1,6 +1,10 @@
 import MetalKit
 import Combine
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 public struct ShaderCommonUniform {
     public var seed: UInt32           // uint32_t
     public var time: Float            // float
@@ -76,7 +80,68 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
         self.device = device
         self.commandQueue = device.makeCommandQueue()!
         self.currentShader = shader
+
+        // Gesture recognizers are attached later via attachGestures(to:) because MTKView is not provided here.
     }
+
+    // MARK: - Gesture Recognizers (UIKit)
+    #if canImport(UIKit)
+    /// MTKView にジェスチャーをアタッチします
+    /// - Important: SwiftUI で使用する場合、UIViewRepresentable の makeUIView などから呼び出してください。
+    public func attachGestures(to view: MTKView) {
+        view.isUserInteractionEnabled = true
+
+        // Tap
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        view.addGestureRecognizer(tap)
+
+        // Pan (drag)
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.maximumNumberOfTouches = 1
+        view.addGestureRecognizer(pan)
+
+        // Pinch
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        view.addGestureRecognizer(pinch)
+
+        // Rotation
+        let rotation = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
+        view.addGestureRecognizer(rotation)
+    }
+
+    // MARK: - Gesture handlers
+    @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
+        guard let view = recognizer.view else { return }
+        let p = recognizer.location(in: view)
+        // Metal の座標系と一致させるためにそのままピクセル座標で保持
+        updateTap(point: p, z: 0.0)
+    }
+
+    @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
+        guard let view = recognizer.view else { return }
+        let p = recognizer.location(in: view)
+        updateDrag(point: p)
+        if recognizer.state == .ended || recognizer.state == .cancelled {
+            // ドラッグ終了時、前回位置をリセットして delta の暴れを抑える
+            lastDragPoint = p
+        }
+    }
+
+    @objc private func handlePinch(_ recognizer: UIPinchGestureRecognizer) {
+        updatePinch(scale: recognizer.scale)
+        if recognizer.state == .ended || recognizer.state == .cancelled {
+            // 継続的な累積を避けたい場合は 1.0 に戻す
+            recognizer.scale = 1.0
+        }
+    }
+
+    @objc private func handleRotation(_ recognizer: UIRotationGestureRecognizer) {
+        updateRotation(radians: recognizer.rotation)
+        if recognizer.state == .ended || recognizer.state == .cancelled {
+            recognizer.rotation = 0.0
+        }
+    }
+    #endif
 
     // MARK: - Public updates
     public func updateShaderParameters(_ params: Any) {

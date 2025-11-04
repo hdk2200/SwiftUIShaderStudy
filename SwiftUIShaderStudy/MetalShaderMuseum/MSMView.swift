@@ -12,6 +12,7 @@ public struct MSMView: UIViewRepresentable {
         let view = MTKView()
         view.device = renderer.device
         view.delegate = renderer
+        renderer.attachGestures(to: view) // ← ここでアタッチ
         return view
     }
 
