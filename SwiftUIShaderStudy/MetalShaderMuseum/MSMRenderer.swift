@@ -9,18 +9,32 @@ public struct ShaderCommonUniform {
     public var tsize: SIMD2<Float>    // vector_float2 (Texture size)
     public var userpt: SIMD3<Float>   // vector_float3 (user pointer)
 
+    // Gesture-driven values (参考: ShaderSample.swift の一般的な構成)
+    public var drag: SIMD2<Float>     // ドラッグ位置（0..vsize）
+    public var delta: SIMD2<Float>    // 前フレームからの移動量
+    public var scale: Float           // ピンチスケール
+    public var rotation: Float        // 回転（ラジアン）
+
     public init(seed: UInt32 = 0,
                 time: Float = 0,
                 vsize: SIMD2<Float> = .zero,
                 aspect: Float = 1.0,
                 tsize: SIMD2<Float> = .zero,
-                userpt: SIMD3<Float> = .zero) {
+                userpt: SIMD3<Float> = .zero,
+                drag: SIMD2<Float> = .zero,
+                delta: SIMD2<Float> = .zero,
+                scale: Float = 1.0,
+                rotation: Float = 0.0) {
         self.seed = seed
         self.time = time
         self.vsize = vsize
         self.aspect = aspect
         self.tsize = tsize
         self.userpt = userpt
+        self.drag = drag
+        self.delta = delta
+        self.scale = scale
+        self.rotation = rotation
     }
 }
 
@@ -52,6 +66,12 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     private var tapPoint: CGPoint = .zero
     private var zPoint: Float = 0.0
 
+    // MARK: - Gesture state
+    private var dragPoint: CGPoint = .zero
+    private var lastDragPoint: CGPoint = .zero
+    private var pinchScale: CGFloat = 1.0
+    private var rotationRadians: CGFloat = 0.0
+
     public init(device: MTLDevice, shader: MSMDrawable) {
         self.device = device
         self.commandQueue = device.makeCommandQueue()!
@@ -66,6 +86,20 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     public func updateTap(point: CGPoint, z: Float = 0.0) {
         tapPoint = point
         zPoint = z
+    }
+
+    // MARK: - Gesture updates (SwiftUI から反映)
+    public func updateDrag(point: CGPoint) {
+        lastDragPoint = dragPoint
+        dragPoint = point
+    }
+
+    public func updatePinch(scale: CGFloat) {
+        pinchScale = scale
+    }
+
+    public func updateRotation(radians: CGFloat) {
+        rotationRadians = radians
     }
 
     // MARK: - MTKViewDelegate
@@ -86,13 +120,25 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
         let vSize = SIMD2<Float>(Float(viewportSize.width), Float(viewportSize.height))
         let tSize = SIMD2<Float>(0.0, 0.0)
         let pt = SIMD3<Float>(Float(tapPoint.x), Float(tapPoint.y), zPoint)
+
+        // Gesture 値の計算
+        let drag = SIMD2<Float>(Float(dragPoint.x), Float(dragPoint.y))
+        let last = SIMD2<Float>(Float(lastDragPoint.x), Float(lastDragPoint.y))
+        let delta = drag - last
+        let scaleValue = Float(pinchScale)
+        let rotationValue = Float(rotationRadians)
+
         var uniforms = ShaderCommonUniform(
             seed: seed,
             time: Float(Float(frameCount) / Float(view.preferredFramesPerSecond)),
             vsize: vSize,
             aspect: Float(viewportSize.width / max(1, viewportSize.height)),
             tsize: tSize,
-            userpt: pt
+            userpt: pt,
+            drag: drag,
+            delta: delta,
+            scale: scaleValue,
+            rotation: rotationValue
         )
 
         // コマンドバッファ作成
@@ -127,3 +173,4 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
         commandBuffer.commit()
     }
 }
+
