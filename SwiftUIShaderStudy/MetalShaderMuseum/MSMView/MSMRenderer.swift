@@ -1,9 +1,11 @@
 import MetalKit
+import simd
 import Combine
 
 #if canImport(UIKit)
 import UIKit
 #endif
+
 
 public struct ShaderCommonUniform {
     public var seed: UInt32           // uint32_t
@@ -42,11 +44,17 @@ public struct ShaderCommonUniform {
     }
 }
 
-import MetalKit
-import simd
-import Combine
+
+
+protocol MSMRendererDelegate: AnyObject {
+  func renderer(_ renderer: MTKViewDelegate, didUpdateFPS fps: Double)
+}
+
 
 public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
+
+   // delegate
+    weak var delegate: (any MSMRendererDelegate)?
 
     // MARK: - Metal resources
     public let device: MTLDevice
@@ -75,6 +83,10 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     private var lastDragPoint: CGPoint = .zero
     private var pinchScale: CGFloat = 1.0
     private var rotationRadians: CGFloat = 0.0
+  
+  //
+  private var fpsStartTime: CFTimeInterval?
+
 
     public init(device: MTLDevice, shader: MSMDrawable) {
         self.device = device
@@ -83,6 +95,11 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
         // Gesture recognizers are attached later via attachGestures(to:) because MTKView is not provided here.
     }
+  
+    public func changeShader(to newShader: MSMDrawable) {
+        self.currentShader = newShader
+    }
+    
 
     // MARK: - Gesture Recognizers (UIKit)
     #if canImport(UIKit)

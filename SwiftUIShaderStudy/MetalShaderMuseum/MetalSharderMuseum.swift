@@ -30,6 +30,47 @@ struct MetalSharderMuseum: View {
                          )
                 .presentationDetents([.fraction(0.3)])
         }
+        
+        
+        let frameCount = renderer.frameCount
+        VStack{
+          Spacer()
+          HStack{
+            Button("Shader A") {
+                do {
+                    guard let defaultLibrary = renderer.device.makeDefaultLibrary() else {
+                        print("Failed to create default Metal library")
+                        return
+                    }
+                  let shader = try S02_01Shader(
+                        device: renderer.device,
+                        library: defaultLibrary
+                    )
+                    renderer.changeShader(to: shader)
+                } catch {
+                    print("Failed to switch to S02_01Shader: \(error)")
+                }
+            }
+
+            Button("Shader B") {
+                do {
+                    guard let defaultLibrary = renderer.device.makeDefaultLibrary() else {
+                        print("Failed to create default Metal library")
+                        return
+                    }
+                    let shader = try S02_02Shader(
+                        device: renderer.device,
+                        library: defaultLibrary
+                    )
+                    renderer.changeShader(to: shader)
+                } catch {
+                    print("Failed to switch to S02_02Shader: \(error)")
+                }
+            }
+          }
+          Text("frame count: \(frameCount)")
+            .foregroundStyle(Color.white)
+        }
       }
       .onAppear() {
         print("MetalSharderMuseum onAppear")
@@ -40,3 +81,4 @@ struct MetalSharderMuseum: View {
 #Preview {
     MetalSharderMuseum()
 }
+
