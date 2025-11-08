@@ -32,9 +32,12 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
     // 正規化スクリーン座標 (-1 ~ 1)
-    float2 pos = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
+  float screenWH = min(data.vsize.x, data.vsize.y);
+  float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
     float tm = uniform->time;
-
+  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
+  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
+//  pos += tap;
     // === 1. グリッドサイズを滑らかにアニメーション ===
     float baseGrid = 1.0 * uniform->scale;
     float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
@@ -53,6 +56,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float shapeCircle = circle(gridPos - cellCenter, 0.3 + 0.18 * sin(tm * 2.0));
     float shapeBox    = box(gridPos - cellCenter, float2(0.25 + 0.2 * cos(tm), 0.35));
     float shapeCross  = cross(gridPos - cellCenter, 0.08 + 0.05 * sin(tm * 3.0));
+
 
     // 3つのフェーズに分けて滑らかにブレンド
     float shape;
@@ -98,11 +102,14 @@ fragment float4 shader02_02(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
-    // 正規化スクリーン座標 (-1 ~ 1)
-    float2 pos = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
-    float tm = uniform->time;
-  pos = sin(tm) * pos;
-
+  // 正規化スクリーン座標 (-1 ~ 1)
+  float screenWH = min(data.vsize.x, data.vsize.y);
+  float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
+  float tm = uniform->time;
+  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
+  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
+    pos += tap;
+//  pos = pos * sin(tm) ;
     // === 1. グリッドサイズを滑らかにアニメーション ===
     float baseGrid = 1.0 * uniform->scale;
     float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
