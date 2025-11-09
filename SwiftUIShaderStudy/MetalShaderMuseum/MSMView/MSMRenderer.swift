@@ -109,15 +109,18 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
       // Tap
       let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+      tap.delegate = self
       view.addGestureRecognizer(tap)
 
       // Pan (drag)
       let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-      pan.maximumNumberOfTouches = 1
+      pan.delegate = self
+      pan.maximumNumberOfTouches = 2
       view.addGestureRecognizer(pan)
 
       // Pinch
       let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+      pinch.delegate = self
       view.addGestureRecognizer(pinch)
 
       // Rotation
@@ -125,6 +128,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
         target: self,
         action: #selector(handleRotation(_:))
       )
+      rotation.delegate = self
       view.addGestureRecognizer(rotation)
     }
 
@@ -286,3 +290,14 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   }
 
 }
+
+#if canImport(UIKit)
+  extension MSMRenderer: UIGestureRecognizerDelegate {
+    public func gestureRecognizer(
+      _ gestureRecognizer: UIGestureRecognizer,
+      shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+      true
+    }
+  }
+#endif
