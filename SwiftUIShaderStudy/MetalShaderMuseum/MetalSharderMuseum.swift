@@ -77,7 +77,7 @@ struct MetalSharderMuseum: View {
           }
         }
         let fpsstr = String(format: "%.1f", renderer.fps)
-        Text("frame count: \(fpsstr)")
+        Text("fps: \(fpsstr)")
           .foregroundStyle(Color.white)
       }
     }
