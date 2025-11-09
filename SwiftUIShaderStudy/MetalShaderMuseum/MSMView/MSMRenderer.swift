@@ -45,6 +45,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   private var dragPoint: CGPoint = .zero
   private var lastDragPoint: CGPoint = .zero
   private var pinchScale: CGFloat = 1.0
+  private var pinchGestureStartScale: CGFloat = 1.0
   private var rotationRadians: CGFloat = 0.0
 
   // For FPS 
@@ -114,10 +115,20 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     }
 
     @objc private func handlePinch(_ recognizer: UIPinchGestureRecognizer) {
-      updatePinch(scale: recognizer.scale)
-      if recognizer.state == .ended || recognizer.state == .cancelled {
-        // 継続的な累積を避けたい場合は 1.0 に戻す
+      switch recognizer.state {
+      case .began:
+        pinchGestureStartScale = pinchScale
+      case .changed, .ended:
+        let newScale = pinchGestureStartScale * recognizer.scale
+        updatePinch(scale: newScale)
+        if recognizer.state == .ended {
+          // 継続的な累積を避けたい場合は 1.0 に戻す
+          recognizer.scale = 1.0
+        }
+      case .cancelled, .failed:
         recognizer.scale = 1.0
+      default:
+        break
       }
     }
 
