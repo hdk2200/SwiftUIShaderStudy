@@ -1,7 +1,8 @@
 import MetalKit
 
 public protocol MSMDrawable {
+  associatedtype Parameters
   var pipelineState: MTLRenderPipelineState { get }
   func draw(commandEncoder: MTLRenderCommandEncoder)
-  func setParameters(_ parameters: Any)
+  func setParameters(_ parameters: Parameters)
 }

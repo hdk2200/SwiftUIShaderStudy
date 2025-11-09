@@ -1,17 +1,16 @@
 import MetalKit
 import simd
 
-public final class S02_01Shader: MSMDrawable {
-  public let pipelineState: MTLRenderPipelineState
-  private var uniformBuffer: MTLBuffer
-  var uniforms = ShaderCommonUniform(
-    seed: 42,
-    time: 0.0,
-    vsize: SIMD2<Float>(800, 600),
-    aspect: 800.0 / 600.0
-  )
+public struct S02_01Parameters {
+  var lineWidth: Float
 
-  private var _time: Float = 0.0
+}
+public final class S02_01Shader: MSMDrawable {
+  public typealias Parameters = S02_01Parameters
+
+  public let pipelineState: MTLRenderPipelineState
+  private var shaderUniformBuffer: MTLBuffer?
+  private var params = S02_01Parameters(lineWidth: 2.0)
 
   // triangle ２つで全面とする
   private var triangleVertices: [SIMD4<Float>] = [
@@ -27,33 +26,29 @@ public final class S02_01Shader: MSMDrawable {
     descriptor.fragmentFunction = library.makeFunction(name: "shader02_01")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
-    uniformBuffer = device.makeBuffer(
-      length: MemoryLayout<ShaderCommonUniform>.stride,
+    shaderUniformBuffer = device.makeBuffer(
+      length: MemoryLayout<S02_01Parameters>.stride,
       options: []
     )!
   }
 
-  public func setParameters(_ parameters: Any) {
-    guard let params = parameters as? ShaderCommonUniform else { return }
-    uniforms = params
-    memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<ShaderCommonUniform>.stride)
+  public func setParameters(_ parameters: S02_01Parameters) {
+    self.params = parameters
+    // 必要に応じて Metal バッファにコピー
+    print("setParameters \(params)")
   }
+  
+//  func setShaderUniforms(_ uniforms: S02_01Parameters) {
+//    shaderUniforms = uniforms
+////    memcpy(shaderUniformBuffer.contents(), &uniforms, MemoryLayout<S02_01Parameters>.stride)
+//  }
 
   public func draw(commandEncoder: MTLRenderCommandEncoder) {
-    //      uniforms.time = _time
-    //      _time += 1.0
-    //      setParameters(uniforms)
-    //      print("time: \(_time)")
-
     commandEncoder.setRenderPipelineState(pipelineState)
-    //        commandEncoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 1)
-    //      commandEncoder.setVertexBytes(uniformBuffer,
-    //                                   length: MemoryLayout<SIMD4<Float>>.stride * triangleVertices.count,
-    //                                   index: 0)
-
-    // 頂点・描画処理をここに
+    commandEncoder.setFragmentBytes(&params, length: MemoryLayout<S02_01Parameters>.stride, index: 1)
   }
 }
+
 
 public final class S02_02Shader: MSMDrawable {
   public let pipelineState: MTLRenderPipelineState
@@ -105,6 +100,7 @@ public final class S02_02Shader: MSMDrawable {
     //                                   length: MemoryLayout<SIMD4<Float>>.stride * triangleVertices.count,
     //                                   index: 0)
 
+    
     // 頂点・描画処理をここに
   }
 }

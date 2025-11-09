@@ -15,7 +15,8 @@ struct MetalSharderMuseum: View {
   )
 
   @State private var showSettings = false
-
+  @State private var lineWidth: Float = 1.0
+  
   var body: some View {
     ZStack {
       MSMView(renderer: renderer)
@@ -70,6 +71,27 @@ struct MetalSharderMuseum: View {
         Text("frame count: \(fpsstr)")
           .foregroundStyle(Color.white)
       }
+      VStack {
+        // MTKView 表示（省略）
+
+        if renderer.currentShader is S02_01Shader{
+        
+          HStack {
+            Text("Line Width \(String(format: "%.1f", lineWidth))")
+              .foregroundStyle(Color.white)
+            Slider(value: Binding(
+              get: { Double(lineWidth)},
+              set: { newValue in
+               
+                guard let shader = renderer.currentShader as? S02_01Shader else { return }
+                lineWidth = Float(newValue)
+                shader.setParameters(S02_01Parameters(lineWidth: lineWidth))
+              }
+            ), in: 0.01...2.0)
+          }
+          .padding()
+        }
+      }
     }
     .onAppear {
       print("MetalSharderMuseum onAppear")
@@ -80,3 +102,4 @@ struct MetalSharderMuseum: View {
 #Preview {
   MetalSharderMuseum()
 }
+

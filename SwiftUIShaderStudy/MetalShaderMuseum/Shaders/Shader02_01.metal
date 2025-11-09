@@ -27,9 +27,16 @@ float cross(float2 p, float w) {
     return min(abs(p.x), abs(p.y)) - w;
 }
 
+
+typedef struct S02_01Parameters {
+  float lineWidth;
+} S02_01Parameters;
+
 fragment float4 shader02_01(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
-                            constant ShaderCommonUniform *uniform [[buffer(0)]])
+                            constant ShaderCommonUniform *uniform [[buffer(0)]],
+                            constant S02_01Parameters    *s_param [[buffer(1)]]
+                            )
 {
     // 正規化スクリーン座標 (-1 ~ 1)
   float screenWH = min(data.vsize.x, data.vsize.y);
@@ -40,7 +47,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
 //  pos += tap;
     // === 1. グリッドサイズを滑らかにアニメーション ===
     float baseGrid = 1.0 * uniform->scale;
-    float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
+    float gridPulse = 0.1 * sin(tm * 1.8);           // ゆっくり脈動
     float gridSize = baseGrid + gridPulse;
 
     // グリッドの「位相」を時間でずらして流れるように
@@ -86,7 +93,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
 
     // === 4. グリッド線を滑らかに（オプション）===
     float2 gridLine = abs(fract((pos + gridOffset) / gridSize) - 0.5);
-    float lineMask = 1.0 - smoothstep(0.0, 0.03, min(gridLine.x, gridLine.y));
+    float lineMask = 1.0 - smoothstep(0.0, 0.1 * (s_param->lineWidth) , min(gridLine.x, gridLine.y));
     finalColor = mix(finalColor, float3(1.0, 1.0, 1.0), lineMask * 0.25);
 
     // === 5. 全体に微かな波紋エフェクト（滑らかさを増す）===

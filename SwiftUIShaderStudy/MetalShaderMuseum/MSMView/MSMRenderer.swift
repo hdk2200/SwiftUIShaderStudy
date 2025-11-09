@@ -162,10 +162,6 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     }
   #endif
 
-  // MARK: - Public updates
-  public func updateShaderParameters(_ params: Any) {
-    currentShader.setParameters(params)
-  }
 
   public func updateTap(point: CGPoint, z: Float = 0.0) {
     tapPoint = point
