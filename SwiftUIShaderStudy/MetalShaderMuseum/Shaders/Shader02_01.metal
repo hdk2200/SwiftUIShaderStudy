@@ -39,20 +39,34 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
                             )
 {
     // 正規化スクリーン座標 (-1 ~ 1)
+  float tm = uniform->time;
   float screenWH = min(data.vsize.x, data.vsize.y);
-  float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
-    float tm = uniform->time;
+
+  float2 pos_drag = data.position.xy - uniform->drag;
+//  float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
+  float2 pos = (pos_drag.xy * 2.0 - data.vsize) / screenWH;
+
 //  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
 //  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
 //  pos += tap;
-    // === 1. グリッドサイズを滑らかにアニメーション ===
+
+  // 回転を適用（回転中心は画面中心）
+  float angle = -1.0 * uniform->rotation; // ラジアン角
+  float s = sin(angle);
+  float c = cos(angle);
+  float2 pos_rot;
+  pos_rot.x = c * pos.x - s * pos.y;
+  pos_rot.y = s * pos.x + c * pos.y;
+  
+
+  // === 1. グリッドサイズを滑らかにアニメーション ===
     float baseGrid = 1.0 * uniform->scale;
     float gridPulse = 0.1 * sin(tm * 1.8);           // ゆっくり脈動
     float gridSize = baseGrid + gridPulse;
 
     // グリッドの「位相」を時間でずらして流れるように
     float2 gridOffset = float2(sin(tm * 0.7), cos(tm * 0.5)) * 0.3;
-    float2 gridPos = fract((pos + gridOffset) / gridSize);
+    float2 gridPos = fract((pos_rot + gridOffset) / gridSize);
     float2 cellCenter = float2(0.5, 0.5);
 
     // === 2. 形状を滑らかにブレンド（3種類を時間で補間）===
@@ -92,12 +106,12 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float3 finalColor = mix(colorOut, colorIn, step(shape, 0.0));
 
     // === 4. グリッド線を滑らかに（オプション）===
-    float2 gridLine = abs(fract((pos + gridOffset) / gridSize) - 0.5);
+    float2 gridLine = abs(fract((pos_rot + gridOffset) / gridSize) - 0.5);
     float lineMask = 1.0 - smoothstep(0.0, 0.1 * (s_param->lineWidth) , min(gridLine.x, gridLine.y));
     finalColor = mix(finalColor, float3(1.0, 1.0, 1.0), lineMask * 0.25);
 
     // === 5. 全体に微かな波紋エフェクト（滑らかさを増す）===
-    float ripple = sin(length(pos) * 8.0 - tm * 4.0) * 0.02;
+    float ripple = sin(length(pos_rot) * 8.0 - tm * 4.0) * 0.02;
     finalColor += ripple * (step(shape, 0.0) ? 1.0 : 0.3);
 
     return float4(finalColor, 1.0);

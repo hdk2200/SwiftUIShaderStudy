@@ -13,7 +13,7 @@ public struct ShaderCommonUniform {
   public var aspect: Float  // float
   public var tsize: SIMD2<Float>  // vector_float2 (Texture size)
   public var userpt: SIMD3<Float>  // vector_float3 (user pointer)
-
+  
   // Gesture-driven values (参考: ShaderSample.swift の一般的な構成)
   public var drag: SIMD2<Float>  // ドラッグ位置（0..vsize）
   public var delta: SIMD2<Float>  // 前フレームからの移動量
