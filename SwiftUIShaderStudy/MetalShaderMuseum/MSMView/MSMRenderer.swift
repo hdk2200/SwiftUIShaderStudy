@@ -61,6 +61,8 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   // MARK: - SwiftUI bindings
   @Published public var currentShader: MSMDrawable
   @Published public var frameCount: Int = 0
+  @Published public var fps: Double = 0
+  
 
   // MARK: - Vertex + Uniform
   private var triangleVertices: [SIMD4<Float>] = [
@@ -82,8 +84,9 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   private var pinchScale: CGFloat = 1.0
   private var rotationRadians: CGFloat = 0.0
 
-  //
+  // For FPS 
   private var fpsStartTime: CFTimeInterval?
+  private var fpsFrameCount: Int = 0
 
   public init(device: MTLDevice, shader: MSMDrawable) {
     self.device = device
@@ -185,13 +188,13 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
   // MARK: - MTKViewDelegate
 
-  public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+  public func mtkView(_ mtkView: MTKView, drawableSizeWillChange size: CGSize) {
     viewportSize = size
   }
 
-  public func draw(in view: MTKView) {
-    guard let drawable = view.currentDrawable,
-      let renderPassDescriptor = view.currentRenderPassDescriptor
+  public func draw(in mtkView: MTKView) {
+    guard let drawable = mtkView.currentDrawable,
+      let renderPassDescriptor = mtkView.currentRenderPassDescriptor
     else { return }
 
     // FPS進行
@@ -212,7 +215,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
     var uniforms = ShaderCommonUniform(
       seed: seed,
-      time: Float(Float(frameCount) / Float(view.preferredFramesPerSecond)),
+      time: Float(Float(frameCount) / Float(mtkView.preferredFramesPerSecond)),
       vsize: vSize,
       aspect: Float(viewportSize.width / max(1, viewportSize.height)),
       tsize: tSize,
@@ -262,5 +265,28 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     encoder.endEncoding()
     commandBuffer.present(drawable)
     commandBuffer.commit()
+    
+    calculateFPS(in:mtkView)
   }
+  
+  private func calculateFPS(in mtkView: MTKView) {
+    guard let startTime = fpsStartTime else {
+      fpsStartTime = CACurrentMediaTime()
+      return
+    }
+
+    fpsFrameCount += 1
+    let endTime = CACurrentMediaTime()
+    let elapsedTime = endTime - startTime
+
+    if elapsedTime >= 1.0 {
+      self.fps = Double(fpsFrameCount) / elapsedTime
+      print("FPS: \(String(format: "%.2f", fps)) , frame= \(fpsFrameCount) , preffered=\(mtkView.preferredFramesPerSecond)  ")
+//      delegate?.renderer(self, didUpdateFPS: fps)
+      fpsStartTime = endTime
+      fpsFrameCount = 0
+//      self.frameCount = 0
+    }
+  }
+
 }

@@ -35,8 +35,8 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
   float screenWH = min(data.vsize.x, data.vsize.y);
   float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
     float tm = uniform->time;
-  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
-  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
+//  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
+//  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
 //  pos += tap;
     // === 1. グリッドサイズを滑らかにアニメーション ===
     float baseGrid = 1.0 * uniform->scale;
@@ -49,7 +49,7 @@ fragment float4 shader02_01(VertexOut data [[stage_in]],
     float2 cellCenter = float2(0.5, 0.5);
 
     // === 2. 形状を滑らかにブレンド（3種類を時間で補間）===
-    float cycle = 6.0; // 1サイクル秒数
+    float cycle = 15.0; // 1サイクル秒数
     float t = fract(tm / cycle); // 0~1 の正規化時間
 
     // 各形状のSDF

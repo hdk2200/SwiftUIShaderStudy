@@ -30,7 +30,7 @@ struct MetalSharderMuseum: View {
         .presentationDetents([.fraction(0.3)])
       }
 
-      let frameCount = renderer.frameCount
+//      let frameCount = renderer.frameCount
       VStack {
         Spacer()
         HStack {
@@ -66,7 +66,8 @@ struct MetalSharderMuseum: View {
             }
           }
         }
-        Text("frame count: \(frameCount)")
+        let fpsstr = String(format: "%.1f", renderer.fps)
+        Text("frame count: \(fpsstr)")
           .foregroundStyle(Color.white)
       }
     }
