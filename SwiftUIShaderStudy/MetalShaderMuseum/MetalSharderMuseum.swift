@@ -26,7 +26,8 @@ struct MetalSharderMuseum: View {
 
       FloatingSettingsButton(isPresented: $showSettings) {
         MetalSharderMuseumSetting(
-          showSettings: $showSettings
+          showSettings: $showSettings,
+          renderer: renderer
         )
         .presentationDetents([.fraction(0.3)])
       }
@@ -34,6 +35,14 @@ struct MetalSharderMuseum: View {
 //      let frameCount = renderer.frameCount
       VStack {
         Spacer()
+//        VStack {
+//          // MTKView 表示（省略）
+//
+//          if let configurable = renderer.currentShader as? MSMConfigurableShader {
+//            configurable.settingsView()
+//          }
+//        }
+
         HStack {
           Button("Shader A") {
             do {
@@ -70,13 +79,6 @@ struct MetalSharderMuseum: View {
         let fpsstr = String(format: "%.1f", renderer.fps)
         Text("frame count: \(fpsstr)")
           .foregroundStyle(Color.white)
-      }
-      VStack {
-        // MTKView 表示（省略）
-
-        if let configurable = renderer.currentShader as? MSMConfigurableShader {
-          configurable.settingsView()
-        }
       }
     }
     .onAppear {
