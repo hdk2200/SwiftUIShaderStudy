@@ -1,3 +1,4 @@
+import SwiftUI
 import MetalKit
 
 public protocol MSMDrawable {
@@ -5,4 +6,8 @@ public protocol MSMDrawable {
   var pipelineState: MTLRenderPipelineState { get }
   func draw(commandEncoder: MTLRenderCommandEncoder)
   func setParameters(_ parameters: Parameters)
+}
+
+public protocol MSMConfigurableShader {
+  func settingsView() -> AnyView
 }

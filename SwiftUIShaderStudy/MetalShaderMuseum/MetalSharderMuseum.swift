@@ -74,22 +74,8 @@ struct MetalSharderMuseum: View {
       VStack {
         // MTKView 表示（省略）
 
-        if renderer.currentShader is S02_01Shader{
-        
-          HStack {
-            Text("Line Width \(String(format: "%.1f", lineWidth))")
-              .foregroundStyle(Color.white)
-            Slider(value: Binding(
-              get: { Double(lineWidth)},
-              set: { newValue in
-               
-                guard let shader = renderer.currentShader as? S02_01Shader else { return }
-                lineWidth = Float(newValue)
-                shader.setParameters(S02_01Parameters(lineWidth: lineWidth))
-              }
-            ), in: 0.01...2.0)
-          }
-          .padding()
+        if let configurable = renderer.currentShader as? MSMConfigurableShader {
+          configurable.settingsView()
         }
       }
     }

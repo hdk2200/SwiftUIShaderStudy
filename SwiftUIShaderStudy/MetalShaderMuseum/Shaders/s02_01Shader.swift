@@ -1,5 +1,6 @@
 import MetalKit
 import simd
+import SwiftUI
 
 public struct S02_01Parameters {
   var lineWidth: Float
@@ -49,6 +50,25 @@ public final class S02_01Shader: MSMDrawable {
   }
 }
 
+extension S02_01Shader: MSMConfigurableShader {
+  public func settingsView() -> AnyView {
+    AnyView(
+      HStack {
+        Text("Line Width \(String(format: "%.1f", params.lineWidth))")
+          .foregroundStyle(.white)
+        Slider(value: Binding<Double>(
+          get: { Double(self.params.lineWidth) },
+          set: { newValue in
+            var p = self.params
+            p.lineWidth = Float(newValue)
+            self.setParameters(p)
+          }
+        ), in: 0.005...4.0)
+      }
+      .padding()
+    )
+  }
+}
 
 public final class S02_02Shader: MSMDrawable {
   public let pipelineState: MTLRenderPipelineState
@@ -100,7 +120,7 @@ public final class S02_02Shader: MSMDrawable {
     //                                   length: MemoryLayout<SIMD4<Float>>.stride * triangleVertices.count,
     //                                   index: 0)
 
-    
+
     // 頂点・描画処理をここに
   }
 }
