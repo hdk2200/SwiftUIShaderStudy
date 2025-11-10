@@ -7,6 +7,7 @@ using namespace metal;
 
 #include "../../MetalCommon/ShaderCommonUniform.h"
 #include "../../MetalCommon/shadersample_internal.h"
+#include "../../MetalCommon/SDFPrimitives.metal"
 
 #define M_PI 3.14159265359
 
