@@ -16,73 +16,85 @@ struct MetalSharderMuseum: View {
 
   @State private var showSettings = false
   @State private var lineWidth: Float = 1.0
+  @State private var showShaderPicker = false
+  @State private var shaderPickerError: String?
+
+  private let shaderOptions = ShaderOption.available
   
   var body: some View {
     ZStack {
       MSMView(renderer: renderer)
         .edgesIgnoringSafeArea(.all)
 
-      //        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-
-      FloatingSettingsButton(isPresented: $showSettings) {
-        MetalSharderMuseumSetting(
-          showSettings: $showSettings,
-          renderer: renderer
-        )
-        .presentationDetents([.fraction(0.3)])
-      }
-
-//      let frameCount = renderer.frameCount
+      // Shader selection + settings buttons
       VStack {
         Spacer()
-//        VStack {
-//          // MTKView 表示（省略）
-//
-//          if let configurable = renderer.currentShader as? MSMConfigurableShader {
-//            configurable.settingsView()
-//          }
-//        }
-
         HStack {
-          Button("Shader A") {
-            do {
-              guard let defaultLibrary = renderer.device.makeDefaultLibrary() else {
-                print("Failed to create default Metal library")
-                return
-              }
-              let shader = try S02_01Shader(
-                device: renderer.device,
-                library: defaultLibrary
-              )
-              renderer.changeShader(to: shader)
-            } catch {
-              print("Failed to switch to S02_01Shader: \(error)")
+          Spacer()
+          VStack(spacing: 16) {
+            Button(action: { showShaderPicker = true }) {
+              FloatingShaderButtonLabel()
             }
-          }
+            .sheet(isPresented: $showShaderPicker) {
+              ShaderPickerSheet(
+                options: shaderOptions,
+                selectedOptionID: activeShaderID,
+                onSelect: { option in selectShader(option) }
+              )
+            }
 
-          Button("Shader B") {
-            do {
-              guard let defaultLibrary = renderer.device.makeDefaultLibrary() else {
-                print("Failed to create default Metal library")
-                return
-              }
-              let shader = try S02_02Shader(
-                device: renderer.device,
-                library: defaultLibrary
+            FloatingSettingsButton(isPresented: $showSettings) {
+              MetalSharderMuseumSetting(
+                showSettings: $showSettings,
+                renderer: renderer
               )
-              renderer.changeShader(to: shader)
-            } catch {
-              print("Failed to switch to S02_02Shader: \(error)")
+              .presentationDetents([.fraction(0.3)])
             }
           }
+          .padding(.trailing, 32)
+          .padding(.bottom, 32)
         }
+      }
+
+      //      let frameCount = renderer.frameCount
+      VStack {
+        Spacer()
         let fpsstr = String(format: "%.1f", renderer.fps)
         Text("fps: \(fpsstr)")
           .foregroundStyle(Color.white)
+          .padding(.bottom, 24)
       }
+    }
+    .alert(
+      "Shader Error",
+      isPresented: Binding(
+        get: { shaderPickerError != nil },
+        set: { if !$0 { shaderPickerError = nil } }
+      )
+    ) {
+      Button("OK", role: .cancel) {
+        shaderPickerError = nil
+      }
+    } message: {
+      Text(shaderPickerError ?? "")
     }
     .onAppear {
       print("MetalSharderMuseum onAppear")
+    }
+  }
+
+  private var activeShaderID: String? {
+    shaderOptions.first(where: { $0.matches(renderer.currentShader) })?.id
+  }
+
+  private func selectShader(_ option: ShaderOption) {
+    do {
+      let shader = try option.builder(renderer.device)
+      renderer.changeShader(to: shader)
+      showShaderPicker = false
+    } catch {
+      print("Failed to change shader: \(error)")
+      shaderPickerError = error.localizedDescription
     }
   }
 }
@@ -91,3 +103,107 @@ struct MetalSharderMuseum: View {
   MetalSharderMuseum()
 }
 
+private enum ShaderSelectionError: LocalizedError {
+  case missingDefaultLibrary
+
+  var errorDescription: String? {
+    switch self {
+    case .missingDefaultLibrary:
+      return "Failed to load the default Metal library."
+    }
+  }
+}
+
+private struct ShaderOption: Identifiable {
+  let id: String
+  let title: String
+  let builder: (MTLDevice) throws -> MSMDrawable
+  let matches: (MSMDrawable) -> Bool
+
+  static let available: [ShaderOption] = [
+    ShaderOption(
+      id: "S02_01",
+      title: "Shader 01",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try S02_01Shader(device: device, library: library)
+      },
+      matches: { $0 is S02_01Shader }
+    ),
+    ShaderOption(
+      id: "S02_02",
+      title: "Shader 02",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try S02_02Shader(device: device, library: library)
+      },
+      matches: { $0 is S02_02Shader }
+    ),
+  ]
+}
+
+private struct ShaderPickerSheet: View {
+  let options: [ShaderOption]
+  let selectedOptionID: String?
+  let onSelect: (ShaderOption) -> Void
+
+  private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 2)
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text("Select Shader")
+        .font(.headline)
+        .padding(.horizontal, 4)
+
+      ScrollView {
+        LazyVGrid(columns: columns, spacing: 16) {
+          ForEach(options) { option in
+            let isSelected = option.id == selectedOptionID
+            Button(action: { onSelect(option) }) {
+              VStack {
+                Text(option.title)
+                  .font(.title3)
+                  .fontWeight(.semibold)
+                  .frame(maxWidth: .infinity, alignment: .center)
+                  .padding(.bottom, 4)
+                if isSelected {
+                  Text("Selected")
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.8))
+                }
+              }
+              .foregroundColor(.white)
+              .padding()
+              .frame(maxWidth: .infinity, minHeight: 90)
+              .background(
+                RoundedRectangle(cornerRadius: 14)
+                  .fill(isSelected ? Color.accentColor.opacity(0.5) : Color.white.opacity(0.15))
+              )
+            }
+            .buttonStyle(.plain)
+          }
+        }
+        .padding(.top, 8)
+      }
+    }
+    .padding()
+    .presentationDetents([.medium, .large])
+  }
+}
+
+private struct FloatingShaderButtonLabel: View {
+  var body: some View {
+    ZStack {
+      Circle()
+        .fill(Color.accentColor.opacity(0.85))
+        .frame(width: 60, height: 60)
+      Image(systemName: "sparkles")
+        .font(.system(size: 26, weight: .semibold))
+        .foregroundColor(.white)
+    }
+  }
+}
