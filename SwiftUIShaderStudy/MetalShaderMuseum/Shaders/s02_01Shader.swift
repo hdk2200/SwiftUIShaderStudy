@@ -11,7 +11,7 @@ public final class S02_01Shader: MSMDrawable {
 
   public let pipelineState: MTLRenderPipelineState
   private var shaderUniformBuffer: MTLBuffer?
-  private var params = S02_01Parameters(lineWidth: 2.0)
+  private var params = S02_01Parameters(lineWidth: 0.01)
 
   // triangle ２つで全面とする
   private var triangleVertices: [SIMD4<Float>] = [
