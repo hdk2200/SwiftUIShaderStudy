@@ -44,6 +44,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   // MARK: - Gesture state
   private var dragPoint: CGPoint = .zero
   private var lastDragPoint: CGPoint = .zero
+  private var accumulatedDragTranslation: CGPoint = .zero
   private var pinchScale: CGFloat = 1.0
   private var pinchGestureStartScale: CGFloat = 1.0
   private var rotationRadians: CGFloat = 0.0
@@ -106,11 +107,18 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
     @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
       guard let view = recognizer.view else { return }
-      let p = recognizer.location(in: view)
-      updateDrag(point: p)
-      if recognizer.state == .ended || recognizer.state == .cancelled {
+      let translation = recognizer.translation(in: view)
+      let cumulativePoint = CGPoint(
+        x: accumulatedDragTranslation.x + translation.x,
+        y: accumulatedDragTranslation.y + translation.y
+      )
+      updateDrag(point: cumulativePoint)
+
+      if recognizer.state == .ended || recognizer.state == .cancelled || recognizer.state == .failed {
+        accumulatedDragTranslation = cumulativePoint
+        recognizer.setTranslation(.zero, in: view)
         // ドラッグ終了時、前回位置をリセットして delta の暴れを抑える
-        lastDragPoint = p
+        lastDragPoint = cumulativePoint
       }
     }
 
