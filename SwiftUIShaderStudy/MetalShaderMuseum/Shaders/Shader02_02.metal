@@ -1,7 +1,3 @@
-//
-// Copyright (c) 2025, All rights reserved.
-// 
-//
 #include <metal_stdlib>
 using namespace metal;
 
@@ -11,72 +7,57 @@ using namespace metal;
 
 #define M_PI 3.14159265359
 
-
 fragment float4 shader02_02(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
-  // 正規化スクリーン座標 (-1 ~ 1)
+  // Normalize screen coordinates (-1..1)
   float screenWH = min(data.vsize.x, data.vsize.y);
   float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
   float tm = uniform->time;
-  float2 tapf2 = float2(uniform->userpt.x,uniform->userpt.y);
-  float2 tap = ( tapf2 * 2.0 - data.vsize) / screenWH;
-    pos += tap;
-//  pos = pos * sin(tm) ;
-    // === 1. グリッドサイズを滑らかにアニメーション ===
-    float baseGrid = 1.0 * uniform->scale;
-    float gridPulse = 0.01 * sin(tm * 1.8);           // ゆっくり脈動
-    float gridSize = baseGrid + gridPulse;
+//  float2 tapf2 = float2(uniform->userpt.x, uniform->userpt.y);
+//  float2 tap = (tapf2 * 2.0 - data.vsize) / screenWH;
+//  pos += tap;
 
-    // グリッドの「位相」を時間でずらして流れるように
-    float2 gridOffset = float2(sin(tm * 0.7), cos(tm * 0.5)) * 0.3;
-    float2 gridPos = fract((pos + gridOffset) / gridSize);
-    float2 cellCenter = float2(0.5, 0.5);
+  // Circle parameters
+  float baseScale = max(0.2, uniform->scale);
+  float r = 0.28 / baseScale; // radius scales with uniform->scale
+  float k = 0.18 + 0.06 * sin(tm * 0.9); // smoothing for smin
 
-    // === 2. 形状を滑らかにブレンド（3種類を時間で補間）===
-    float cycle = 1.0; // 1サイクル秒数
-    float t = fract(tm / cycle); // 0~1 の正規化時間
+  // Define animated circle centers in normalized space
+  float2 c0 = float2(0.35 * sin(tm * 0.8),  0.35 * cos(tm * 0.6));
+  float2 c1 = float2(0.35 * sin(tm * 0.8 + 2.094), 0.35 * cos(tm * 0.6 + 1.618));
+  float2 c2 = float2(0.35 * sin(tm * 0.8 + 4.188), 0.35 * cos(tm * 0.6 + 3.236));
+  float2 c3 = float2(0.15 * cos(tm * 1.7), 0.15 * sin(tm * 1.3));
 
-  // 各形状のSDF
-  float shapeCircle = circle(gridPos - cellCenter, 0.3 + 0.18 * sin(tm * 2.0));
-  float shapeBox    = box(gridPos - cellCenter, float2(0.25 + 0.2 * cos(tm), 0.35));
-  float shapeCross  = cross(gridPos - cellCenter, 0.08 + 0.05 * sin(tm * 3.0));
+  // Signed distance to circles (distance - radius)
+  float d0 = length(pos - c0) - r;
+  float d1 = length(pos - c1) - r;
+  float d2 = length(pos - c2) - r;
+  float d3 = length(pos - c3) - (r * 0.75);
 
-    // 3つのフェーズに分けて滑らかにブレンド
-    float shape;
-    if (t < 0.33) {
-        // 円 → ボックス
-        float localT = smoothstep(0.0, 0.33, t);
-        shape = mix(shapeCircle, shapeBox, localT);
-    } else if (t < 0.66) {
-        // ボックス → 十字
-        float localT = smoothstep(0.33, 0.66, t);
-        shape = mix(shapeBox, shapeCross, localT);
-    } else {
-        // 十字 → 円
-        float localT = smoothstep(0.66, 1.0, t);
-        shape = mix(shapeCross, shapeCircle, localT);
-    }
+  // Smooth union via smin
+  float d = smin(d0, d1, k);
+  d = smin(d, d2, k);
+  d = smin(d, d3, k);
 
-    // === 3. 色も滑らかに変化 ===
-    float3 colorIn  = 0.5 + 0.5 * float3(
-        sin(tm + pos.x * 3.0),
-        sin(tm * 1.3 + pos.y * 2.0),
-        cos(tm * 0)
-    );
+  // Soft edge mask
+  float edge = 0.008; // controls antialias width
+  float mask = 1.0 - smoothstep(0.0, edge, d);
 
-    float3 colorOut = float3(0.08, 0.1, 0.18); // 背景
-    float3 finalColor = mix(colorOut, colorIn, step(shape, 0.0));
+  // Color inside vs outside
+  float3 bg = float3(0.06, 0.07, 0.10);
+  float3 inColor = 0.5 + 0.5 * float3(
+      sin(tm + pos.x * 3.2),
+      sin(tm * 1.31 + pos.y * 2.4),
+      cos(tm * 0.73 + (pos.x + pos.y) * 1.2)
+  );
 
-    // === 4. グリッド線を滑らかに（オプション）===
-    float2 gridLine = abs(fract((pos + gridOffset) / gridSize) - 0.5);
-    float lineMask = 1.0 - smoothstep(0.0, 0.03, min(gridLine.x, gridLine.y));
-    finalColor = mix(finalColor, float3(1.0, 1.0, 1.0), lineMask * 0.25);
+  // Add a subtle rim lighting based on gradient of distance
+  float rim = smoothstep(0.0, edge * 3.0, abs(d));
+  float3 rimColor = float3(1.0, 0.95, 0.9) * (1.0 - rim) * 0.25;
 
-    // === 5. 全体に微かな波紋エフェクト（滑らかさを増す）===
-    float ripple = sin(length(pos) * 8.0 - tm * 4.0) * 0.02;
-    finalColor += ripple * (step(shape, 0.0) ? 1.0 : 0.3);
+  float3 finalColor = mix(bg, inColor, mask) + rimColor * mask;
 
-    return float4(finalColor, 1.0);
+  return float4(finalColor, 1.0);
 }

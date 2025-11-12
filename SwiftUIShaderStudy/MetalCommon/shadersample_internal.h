@@ -25,7 +25,7 @@ typedef struct VertexOut
 
 uint xorshift32(thread uint* state);
 float randXORShift(thread uint* state);
-float smin(float a, float b, float k);
+//float smin(float a, float b, float k);
 
 
 //template <typename T> T smin(T a, T b, T k);

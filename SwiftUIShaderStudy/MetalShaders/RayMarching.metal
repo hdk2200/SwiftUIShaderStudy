@@ -8,7 +8,7 @@ using namespace metal;
 
 #include "../MetalCommon/ShaderCommonUniform.h"
 #include "../MetalCommon/shadersample_internal.h"
-
+#include "../MetalCommon/SDFPrimitives.metal"
 #define M_PI 3.14159265359
 // -----------------------------------------------------
 
@@ -395,7 +395,7 @@ half map(half3 p, constant ShaderCommonUniform *uniform)
   half rbox = sdRoundBox(trans(bpt2, 2.0),
                          half3(boxSize, boxSize, boxSize), 0.01);
 
-  return smin(min(sphare, sphareOrigin), rbox, 0.3);
+  return sminhalf(min(sphare, sphareOrigin), rbox, 0.3);
 }
 
 

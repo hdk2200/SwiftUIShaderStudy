@@ -4,6 +4,7 @@
 
 #include "../MetalCommon/ShaderCommonUniform.h"
 #include "../MetalCommon/shadersample_internal.h"
+#include "../MetalCommon/SDFPrimitives.metal"
 using namespace metal;
 
 
@@ -26,17 +27,6 @@ using namespace metal;
 //  return mix(b, a, h) - k * h * (1.0 - h);
 //}
 
-
-float smin(float a, float b, float k)
-{
-  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-  return mix(b, a, h) - k * h * (1.0 - h);
-}
-half smin(half a, half b, half k)
-{
-  half h = clamp(0.5H + 0.5H * (b - a) / k, 0.0H, 1.0H);
-  return mix(b, a, h) - k * h * (1.0H - h);
-}
 
 
 vertex VertexOut
