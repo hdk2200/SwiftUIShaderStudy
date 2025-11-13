@@ -20,8 +20,8 @@ fragment float4 shader02_circle_smin(VertexOut data [[stage_in]],
 //  pos += tap;
 
   // Circle parameters
-  float baseScale = max(0.2, uniform->scale);
-  float r = 0.28 / baseScale; // radius scales with uniform->scale
+  float baseScale = clamp(uniform->scale, 0.2, 5.0);
+  float r = 0.28 * baseScale; // radius now grows with pinch scale
   float k = 0.18 + 0.06 * sin(tm * 0.9); // smoothing for smin
 
   // Define animated circle centers in normalized space
@@ -61,4 +61,3 @@ fragment float4 shader02_circle_smin(VertexOut data [[stage_in]],
 
   return float4(finalColor, 1.0);
 }
-
