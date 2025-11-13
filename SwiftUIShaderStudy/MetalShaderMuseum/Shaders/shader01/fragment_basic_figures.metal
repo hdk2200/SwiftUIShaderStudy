@@ -16,7 +16,7 @@ typedef struct S02_01Parameters {
   float lineWidth;
 } S02_01Parameters;
 
-fragment float4 shader02_01(VertexOut data [[stage_in]],
+fragment float4 fragment_basic_figures(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]],
                             constant S02_01Parameters    *s_param [[buffer(1)]]

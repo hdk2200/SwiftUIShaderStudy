@@ -6,8 +6,7 @@ using namespace metal;
 
 
 
-vertex VertexOut
-vertexCommon(unsigned int vertexId [[vertex_id]],
+vertex VertexOut vertex_pathtrough(unsigned int vertexId [[vertex_id]],
                    const device float4 *vertexs [[buffer(0)]],
                    constant ShaderCommonUniform *uniform [[buffer(1)]])
 {

@@ -16,8 +16,8 @@ public final class ShaderCircleSmin: MSMDrawable {
 
   public init(device: MTLDevice, library: MTLLibrary) throws {
     let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.vertexFunction = library.makeFunction(name: "vertexCommon")
-    descriptor.fragmentFunction = library.makeFunction(name: "shader02_circle_smin")
+    descriptor.vertexFunction = library.makeFunction(name: "vertex_pathtrough")
+    descriptor.fragmentFunction = library.makeFunction(name: "fragment_circle_smin")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
     uniformBuffer = device.makeBuffer(

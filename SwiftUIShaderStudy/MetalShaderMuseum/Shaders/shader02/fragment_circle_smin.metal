@@ -7,7 +7,7 @@ using namespace metal;
 
 #define M_PI 3.14159265359
 
-fragment float4 shader02_circle_smin(VertexOut data [[stage_in]],
+fragment float4 fragment_circle_smin(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
