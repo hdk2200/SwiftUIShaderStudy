@@ -8,7 +8,7 @@ import SwiftUI
 struct MetalSharderMuseum: View {
   @StateObject private var renderer = try! MSMRenderer(
     device: MTLCreateSystemDefaultDevice()!,
-    shader: S02_01Shader(
+    shader: ShaderBasicFigure(
       device: MTLCreateSystemDefaultDevice()!,
       library: MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     )
@@ -122,26 +122,26 @@ private struct ShaderOption: Identifiable {
 
   static let available: [ShaderOption] = [
     ShaderOption(
-      id: "S02_01",
-      title: "Shader 01",
+      id: "ShaderBasicFigure",
+      title: "Basic figures",
       builder: { device in
         guard let library = device.makeDefaultLibrary() else {
           throw ShaderSelectionError.missingDefaultLibrary
         }
-        return try S02_01Shader(device: device, library: library)
+        return try ShaderBasicFigure(device: device, library: library)
       },
-      matches: { $0 is S02_01Shader }
+      matches: { $0 is ShaderBasicFigure }
     ),
     ShaderOption(
-      id: "S02_02",
-      title: "Shader 02",
+      id: "ShaderCircleSmin",
+      title: "Circles smin",
       builder: { device in
         guard let library = device.makeDefaultLibrary() else {
           throw ShaderSelectionError.missingDefaultLibrary
         }
-        return try S02_02Shader(device: device, library: library)
+        return try ShaderCircleSmin(device: device, library: library)
       },
-      matches: { $0 is S02_02Shader }
+      matches: { $0 is ShaderCircleSmin }
     ),
   ]
 }

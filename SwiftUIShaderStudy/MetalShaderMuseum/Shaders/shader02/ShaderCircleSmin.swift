@@ -2,7 +2,7 @@ import MetalKit
 import simd
 import SwiftUI
 
-public final class S02_02Shader: MSMDrawable {
+public final class ShaderCircleSmin: MSMDrawable {
   public let pipelineState: MTLRenderPipelineState
   private var uniformBuffer: MTLBuffer
 
@@ -17,7 +17,7 @@ public final class S02_02Shader: MSMDrawable {
   public init(device: MTLDevice, library: MTLLibrary) throws {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.vertexFunction = library.makeFunction(name: "vertexCommon")
-    descriptor.fragmentFunction = library.makeFunction(name: "shader02_02")
+    descriptor.fragmentFunction = library.makeFunction(name: "shader02_circle_smin")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
     uniformBuffer = device.makeBuffer(

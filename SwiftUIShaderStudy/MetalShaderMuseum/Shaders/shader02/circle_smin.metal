@@ -1,13 +1,13 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#include "../../MetalCommon/ShaderCommonUniform.h"
-#include "../../MetalCommon/shadersample_internal.h"
-#include "../../MetalCommon/SDFPrimitives.metal"
+#include "../../../MetalCommon/ShaderCommonUniform.h"
+#include "../../../MetalCommon/shadersample_internal.h"
+#include "../../../MetalCommon/SDFPrimitives.metal"
 
 #define M_PI 3.14159265359
 
-fragment float4 shader02_02(VertexOut data [[stage_in]],
+fragment float4 shader02_circle_smin(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]])
 {
@@ -61,3 +61,4 @@ fragment float4 shader02_02(VertexOut data [[stage_in]],
 
   return float4(finalColor, 1.0);
 }
+

@@ -2,16 +2,16 @@ import MetalKit
 import simd
 import SwiftUI
 
-public struct S02_01Parameters {
+public struct ShaderBasicFigureParameters {
   var lineWidth: Float
 
 }
-public final class S02_01Shader: MSMDrawable {
-  public typealias Parameters = S02_01Parameters
+public final class ShaderBasicFigure: MSMDrawable {
+  public typealias Parameters = ShaderBasicFigureParameters
 
   public let pipelineState: MTLRenderPipelineState
   private var shaderUniformBuffer: MTLBuffer?
-  private var params = S02_01Parameters(lineWidth: 0.01)
+  private var params = ShaderBasicFigureParameters(lineWidth: 0.01)
 
   // triangle ２つで全面とする
   private var triangleVertices: [SIMD4<Float>] = [
@@ -28,12 +28,12 @@ public final class S02_01Shader: MSMDrawable {
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
     shaderUniformBuffer = device.makeBuffer(
-      length: MemoryLayout<S02_01Parameters>.stride,
+      length: MemoryLayout<ShaderBasicFigureParameters>.stride,
       options: []
     )!
   }
 
-  public func setParameters(_ parameters: S02_01Parameters) {
+  public func setParameters(_ parameters: Parameters) {
     self.params = parameters
     // 必要に応じて Metal バッファにコピー
     print("setParameters \(params)")
@@ -46,11 +46,11 @@ public final class S02_01Shader: MSMDrawable {
 
   public func draw(commandEncoder: MTLRenderCommandEncoder) {
     commandEncoder.setRenderPipelineState(pipelineState)
-    commandEncoder.setFragmentBytes(&params, length: MemoryLayout<S02_01Parameters>.stride, index: 1)
+    commandEncoder.setFragmentBytes(&params, length: MemoryLayout<Parameters>.stride, index: 1)
   }
 }
 
-extension S02_01Shader: MSMConfigurableShader {
+extension ShaderBasicFigure: MSMConfigurableShader {
   public func settingsView() -> AnyView {
     AnyView(
       HStack {
