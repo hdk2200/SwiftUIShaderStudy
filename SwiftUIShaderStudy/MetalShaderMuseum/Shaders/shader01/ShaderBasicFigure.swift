@@ -24,7 +24,7 @@ public final class ShaderBasicFigure: MSMDrawable {
   public init(device: MTLDevice, library: MTLLibrary) throws {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.vertexFunction = library.makeFunction(name: "vertex_pathtrough")
-    descriptor.fragmentFunction = library.makeFunction(name: "basic_figures")
+    descriptor.fragmentFunction = library.makeFunction(name: "fragment_basic_figures")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
     shaderUniformBuffer = device.makeBuffer(

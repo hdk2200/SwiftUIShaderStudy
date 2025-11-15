@@ -15,9 +15,13 @@ fragment float4 fragment_circle_smin(VertexOut data [[stage_in]],
   float screenWH = min(data.vsize.x, data.vsize.y);
   float2 pos = (data.position.xy * 2.0 - data.vsize) / screenWH;
   float tm = uniform->time;
-//  float2 tapf2 = float2(uniform->userpt.x, uniform->userpt.y);
-//  float2 tap = (tapf2 * 2.0 - data.vsize) / screenWH;
-//  pos += tap;
+  float2 tapPix = float2(uniform->userpt.x, uniform->userpt.y);
+  float2 tap = (tapPix * 2.0 - data.vsize) / screenWH;
+//  float2 tap = float2(0.25,-1.5);
+
+if (length(pos - tap) < 0.01) {
+    return float4(1.0, 0.0, 0.0, 1.0);
+}
 
   // Circle parameters
   float baseScale = clamp(uniform->scale, 0.2, 5.0);
@@ -45,6 +49,13 @@ fragment float4 fragment_circle_smin(VertexOut data [[stage_in]],
   float edge = 0.008; // controls antialias width
   float mask = 1.0 - smoothstep(0.0, edge, d);
 
+  // Tap-driven ripple (distance from tap controls wave phase)
+  float dist = length(pos - tap);
+  float rippleWave = sin(dist * 1.0 - tm * 1.0);
+  float ripple = smoothstep(0.0, 1.0, rippleWave * 0.5 + 0.5);
+  float rippleFalloff = exp(-dist * 1.5); // fade wave as it spreads outward
+  float rippleMask = ripple * rippleFalloff; // affect entire scene, not just edges
+
   // Color inside vs outside
   float3 bg = float3(0.06, 0.07, 0.10);
   float3 inColor = 0.5 + 0.5 * float3(
@@ -57,7 +68,9 @@ fragment float4 fragment_circle_smin(VertexOut data [[stage_in]],
   float rim = smoothstep(0.0, edge * 3.0, abs(d));
   float3 rimColor = float3(1.0, 0.95, 0.9) * (1.0 - rim) * 0.25;
 
-  float3 finalColor = mix(bg, inColor, mask) + rimColor * mask;
+  float3 rippleColor = float3(0.9, 0.6, 1.0) * rippleMask;
+
+  float3 finalColor = mix(bg, inColor, mask) + rimColor * mask + rippleColor;
 
   return float4(finalColor, 1.0);
 }

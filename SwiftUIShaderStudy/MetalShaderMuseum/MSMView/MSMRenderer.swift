@@ -101,6 +101,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
       guard let view = recognizer.view else { return }
       let p = recognizer.location(in: view)
+      print("viewsize=\(view.frame.size), tap=\(p)")
       // Metal の座標系と一致させるためにそのままピクセル座標で保持
       updateTap(point: p, z: 0.0)
     }

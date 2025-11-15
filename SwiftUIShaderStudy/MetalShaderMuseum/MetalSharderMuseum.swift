@@ -8,7 +8,7 @@ import SwiftUI
 struct MetalSharderMuseum: View {
   @StateObject private var renderer = try! MSMRenderer(
     device: MTLCreateSystemDefaultDevice()!,
-    shader: ShaderBasicFigure(
+    shader: ShaderCircleSmin(
       device: MTLCreateSystemDefaultDevice()!,
       library: MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     )

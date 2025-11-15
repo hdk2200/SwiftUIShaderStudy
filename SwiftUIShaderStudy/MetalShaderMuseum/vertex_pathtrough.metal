@@ -13,7 +13,7 @@ vertex VertexOut vertex_pathtrough(unsigned int vertexId [[vertex_id]],
   VertexOut out;
   float4 point = vertexs[vertexId];
   out.position = point;
-  //  if( uniform->aspect < 1){ // portrait
+  //  if( uniform->aspect < 1){ // portraitopening
   //    out.position = float4( point.x, point.y * uniform->aspect, point.z, point.w) ;
   //  }
   //  else{ // landscape
