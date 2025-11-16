@@ -6,8 +6,6 @@ import simd
   import UIKit
 #endif
 
-
-
 protocol MSMRendererDelegate: AnyObject {
   func renderer(_ renderer: MTKViewDelegate, didUpdateFPS fps: Double)
 }
@@ -25,7 +23,6 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   @Published public var currentShader: MSMDrawable
   @Published public var frameCount: Int = 0
   @Published public var fps: Double = 0
-  
 
   // MARK: - Vertex + Uniform
   private var triangleVertices: [SIMD4<Float>] = [
@@ -49,7 +46,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
   private var pinchGestureStartScale: CGFloat = 1.0
   private var rotationRadians: CGFloat = 0.0
 
-  // For FPS 
+  // For FPS
   private var fpsStartTime: CFTimeInterval?
   private var fpsFrameCount: Int = 0
 
@@ -101,9 +98,17 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
       guard let view = recognizer.view else { return }
       let p = recognizer.location(in: view)
-      print("viewsize=\(view.frame.size), tap=\(p)")
-      // Metal の座標系と一致させるためにそのままピクセル座標で保持
-      updateTap(point: p, z: 0.0)
+      let ratio_w = viewportSize.width / view.frame.size.width
+      let ratio_h = viewportSize.height / view.frame.size.height
+
+      // ratina の比率に換算し、デバイスpixelに変換 ex)  iPhone16 3  428x926  1284x2778
+      let ptinDevicePixel = CGPoint(x: p.x * ratio_w, y: p.y * ratio_h)
+
+      print(
+        "viewsize=\(view.frame.size),viewportSize=\(viewportSize),ratio=\(ratio_w),\(ratio_h), tap=\(p), \(ptinDevicePixel)"
+      )
+
+      updateTap(point: ptinDevicePixel, z: 0.0)
     }
 
     @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
@@ -115,7 +120,8 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
       )
       updateDrag(point: cumulativePoint)
 
-      if recognizer.state == .ended || recognizer.state == .cancelled || recognizer.state == .failed {
+      if recognizer.state == .ended || recognizer.state == .cancelled || recognizer.state == .failed
+      {
         accumulatedDragTranslation = cumulativePoint
         recognizer.setTranslation(.zero, in: view)
         // ドラッグ終了時、前回位置をリセットして delta の暴れを抑える
@@ -148,7 +154,6 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
       }
     }
   #endif
-
 
   public func updateTap(point: CGPoint, z: Float = 0.0) {
     tapPoint = point
@@ -248,10 +253,10 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     encoder.endEncoding()
     commandBuffer.present(drawable)
     commandBuffer.commit()
-    
-    calculateFPS(in:mtkView)
+
+    calculateFPS(in: mtkView)
   }
-  
+
   private func calculateFPS(in mtkView: MTKView) {
     guard let startTime = fpsStartTime else {
       fpsStartTime = CACurrentMediaTime()
@@ -264,11 +269,13 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
     if elapsedTime >= 1.0 {
       self.fps = Double(fpsFrameCount) / elapsedTime
-      print("FPS: \(String(format: "%.2f", fps)) , frame= \(fpsFrameCount) , preffered=\(mtkView.preferredFramesPerSecond)  ")
-//      delegate?.renderer(self, didUpdateFPS: fps)
+      print(
+        "FPS: \(String(format: "%.2f", fps)) , frame= \(fpsFrameCount) , preffered=\(mtkView.preferredFramesPerSecond)  "
+      )
+      //      delegate?.renderer(self, didUpdateFPS: fps)
       fpsStartTime = endTime
       fpsFrameCount = 0
-//      self.frameCount = 0
+      //      self.frameCount = 0
     }
   }
 
