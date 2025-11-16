@@ -98,17 +98,11 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
       guard let view = recognizer.view else { return }
       let p = recognizer.location(in: view)
-      let ratio_w = viewportSize.width / view.frame.size.width
-      let ratio_h = viewportSize.height / view.frame.size.height
-
-      // ratina の比率に換算し、デバイスpixelに変換 ex)  iPhone16 3  428x926  1284x2778
-      let ptinDevicePixel = CGPoint(x: p.x * ratio_w, y: p.y * ratio_h)
-
+      // Store raw view-point coordinates; conversion to device pixels happens in draw(in:)
       print(
-        "viewsize=\(view.frame.size),viewportSize=\(viewportSize),ratio=\(ratio_w),\(ratio_h), tap=\(p), \(ptinDevicePixel)"
+        "viewsize=\(view.frame.size),viewportSize=\(viewportSize), tap(view points)=\(p)"
       )
-
-      updateTap(point: ptinDevicePixel, z: 0.0)
+      updateTap(point: p, z: 0.0)
     }
 
     @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
@@ -189,14 +183,23 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     frameCount += 1
     let elapsed = Float(CACurrentMediaTime() - startTime)
 
+    // Compute conversion from view points to device pixels (align with handleTap)
+    let viewSize = mtkView.frame.size
+    let ratio_w = viewportSize.width / max(1.0, viewSize.width)
+    let ratio_h = viewportSize.height / max(1.0, viewSize.height)
+
     // Uniform構築
     let vSize = SIMD2<Float>(Float(viewportSize.width), Float(viewportSize.height))
     let tSize = SIMD2<Float>(0.0, 0.0)
-    let pt = SIMD3<Float>(Float(tapPoint.x), Float(tapPoint.y), zPoint)
+    // Convert tapPoint (stored in view points) to device pixels here
+    let tapPx = CGPoint(x: tapPoint.x * ratio_w, y: tapPoint.y * ratio_h)
+    let pt = SIMD3<Float>(Float(tapPx.x), Float(tapPx.y), zPoint)
 
-    // Gesture 値の計算
-    let drag = SIMD2<Float>(Float(dragPoint.x), Float(dragPoint.y))
-    let last = SIMD2<Float>(Float(lastDragPoint.x), Float(lastDragPoint.y))
+    // Gesture 値の計算（デバイスピクセルに揃える）
+    let dragPx = CGPoint(x: dragPoint.x * ratio_w, y: dragPoint.y * ratio_h)
+    let lastPx = CGPoint(x: lastDragPoint.x * ratio_w, y: lastDragPoint.y * ratio_h)
+    let drag = SIMD2<Float>(Float(dragPx.x), Float(dragPx.y))
+    let last = SIMD2<Float>(Float(lastPx.x), Float(lastPx.y))
     let delta = drag - last
     let scaleValue = Float(pinchScale)
     let rotationValue = Float(rotationRadians)
@@ -291,3 +294,4 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     }
   }
 #endif
+
