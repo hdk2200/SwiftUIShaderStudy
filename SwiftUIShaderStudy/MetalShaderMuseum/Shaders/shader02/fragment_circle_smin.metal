@@ -24,26 +24,48 @@ if (length(pos - tap) < 0.01) {
 }
 
   // Circle parameters
-  float baseScale = clamp(uniform->scale, 0.2, 5.0);
+  float baseScale = clamp(uniform->scale, 0.001, 2.0);
   float r = 0.28 * baseScale; // radius now grows with pinch scale
   float k = 0.18 + 0.06 * sin(tm * 0.9); // smoothing for smin
 
-  // Define animated circle centers in normalized space
-  float2 c0 = float2(0.35 * sin(tm * 0.8),  0.35 * cos(tm * 0.6));
-  float2 c1 = float2(0.35 * sin(tm * 0.8 + 2.094), 0.35 * cos(tm * 0.6 + 1.618));
-  float2 c2 = float2(0.35 * sin(tm * 0.8 + 4.188), 0.35 * cos(tm * 0.6 + 3.236));
-  float2 c3 = float2(0.15 * cos(tm * 1.7), 0.15 * sin(tm * 1.3));
+  // Number of circles (change this to adjust how many circles are used)
+  const int circleCount = 50; // fixed for now; changeable in code
+  const int MAX_CIRCLES = 100;
+  int count = clamp(circleCount, 1, MAX_CIRCLES);
 
-  // Signed distance to circles (distance - radius)
-  float d0 = length(pos - c0) - r;
-  float d1 = length(pos - c1) - r;
-  float d2 = length(pos - c2) - r;
-  float d3 = length(pos - c3) - (r * 0.75);
+  // Accumulate signed distance for multiple animated circles using smin
+  // We generalize the previous c0..c3 pattern into a parametric sequence
+  float d = 1e9; // large initial distance
+  for (int i = 0; i < count; ++i) {
+      float fi = float(i);
+      // Pseudo-random spread over a disk with gentle time drift
+      // Hash helpers
+      auto hash11 = [&](float n) -> float {
+          return fract(sin(n) * 43758.5453123);
+      };
+      auto hash21 = [&](float2 p) -> float {
+          return fract(sin(dot(p, float2(12.9898,78.233))) * 43758.5453);
+      };
 
-  // Smooth union via smin
-  float d = smin(d0, d1, k);
-  d = smin(d, d2, k);
-  d = smin(d, d3, k);
+      float radiusMax = 0.85; // how far from center circles can spread (normalized)
+      float angle = 2.0 * M_PI * hash11(fi * 13.37);
+      float rr = sqrt(hash11(fi * 97.13)); // sqrt for uniform-in-disk distribution
+
+      // Add a slow drift so points move smoothly over time
+      float drift = 0.25 * sin(tm * 0.15 + fi * 0.7);
+      float2 base = float2(cos(angle), sin(angle));
+      float2 jitter = float2(
+          cos(2.0 * angle + drift) * 0.1,
+          sin(1.5 * angle - drift) * 0.1
+      );
+
+      float2 ci = (base * rr + jitter) * radiusMax;
+
+      // Slightly vary radius for variety (first one like original, others similar)
+      float ri = r * mix(0.75, 1.0, (i % 3 == 0) ? 1.0 : 0.85);
+      float di = length(pos - ci) - ri;
+      d = (i == 0) ? di : smin(d, di, k);
+  }
 
   // Soft edge mask
   float edge = 0.008; // controls antialias width
@@ -74,3 +96,4 @@ if (length(pos - tap) < 0.01) {
 
   return float4(finalColor, 1.0);
 }
+
