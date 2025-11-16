@@ -143,6 +143,17 @@ private struct ShaderOption: Identifiable {
       },
       matches: { $0 is ShaderCircleSmin }
     ),
+    ShaderOption(
+      id: "ShaderPrimitivesSmin",
+      title: "Primitives smin",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try ShaderPrimitivesSmin(device: device, library: library)
+      },
+      matches: { $0 is ShaderPrimitivesSmin }
+    ),
   ]
 }
 
