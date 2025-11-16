@@ -12,14 +12,14 @@ using namespace metal;
 #define M_PI 3.14159265359
 
 
-typedef struct S02_01Parameters {
+typedef struct FragmentBasicFigureParams {
   float lineWidth;
-} S02_01Parameters;
+} FragmentBasicFigureParams;
 
 fragment float4 fragment_basic_figures(VertexOut data [[stage_in]],
                             float2 uv [[point_coord]],
                             constant ShaderCommonUniform *uniform [[buffer(0)]],
-                            constant S02_01Parameters    *s_param [[buffer(1)]]
+                            constant FragmentBasicFigureParams    *s_param [[buffer(1)]]
                             )
 {
     // 正規化スクリーン座標 (-1 ~ 1)
