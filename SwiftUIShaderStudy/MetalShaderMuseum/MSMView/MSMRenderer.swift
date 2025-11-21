@@ -168,6 +168,15 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
     rotationRadians = radians
   }
 
+  public func resetInteraction() {
+    dragPoint = .zero
+    lastDragPoint = .zero
+    accumulatedDragTranslation = .zero
+    pinchScale = 1.0
+    pinchGestureStartScale = 1.0
+    rotationRadians = 0.0
+  }
+
   // MARK: - MTKViewDelegate
 
   public func mtkView(_ mtkView: MTKView, drawableSizeWillChange size: CGSize) {

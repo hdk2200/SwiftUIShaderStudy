@@ -35,6 +35,24 @@ struct MetalSharderMuseumSetting: View {
           .padding(.top, 8)
       }
     }
+
+    
+    Spacer()
+    
+    Button(action: {
+      renderer.resetInteraction()
+    }) {
+      HStack {
+        Image(systemName: "arrow.counterclockwise")
+        Text("Reset Interaction")
+      }
+      .foregroundColor(.white)
+      .padding()
+      .background(Color.gray.opacity(0.8))
+      .cornerRadius(10)
+    }
+    .padding(.bottom, 20)
+    
     Spacer()
   }
 //      .border(Color.red, width: 1)
