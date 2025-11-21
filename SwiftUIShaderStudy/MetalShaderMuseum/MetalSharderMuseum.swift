@@ -8,7 +8,7 @@ import SwiftUI
 struct MetalSharderMuseum: View {
   @StateObject private var renderer = try! MSMRenderer(
     device: MTLCreateSystemDefaultDevice()!,
-    shader: ShaderPrimitivesSmin(
+    shader: Shader05(
       device: MTLCreateSystemDefaultDevice()!,
       library: MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     )
@@ -164,6 +164,17 @@ private struct ShaderOption: Identifiable {
         return try Shader04(device: device, library: library)
       },
       matches: { $0 is Shader04 }
+    ),
+    ShaderOption(
+      id: "Shader05",
+      title: "Shader05 (RayMarching Smin)",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try Shader05(device: device, library: library)
+      },
+      matches: { $0 is Shader05 }
     ),
   ]
 }
