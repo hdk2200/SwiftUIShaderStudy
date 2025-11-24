@@ -179,6 +179,17 @@ private struct ShaderOption: Identifiable {
       },
       matches: { $0 is Shader05 }
     ),
+    ShaderOption(
+      id: "Shader06",
+      title: "Shader06 (RayMarching Smin)",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try Shader06(device: device, library: library)
+      },
+      matches: { $0 is Shader06 }
+    ),
   ]
 }
 
