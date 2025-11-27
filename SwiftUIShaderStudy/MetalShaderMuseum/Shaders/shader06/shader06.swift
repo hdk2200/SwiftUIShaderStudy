@@ -2,7 +2,10 @@ import MetalKit
 import SwiftUI
 
 public struct Shader06Parameters {
-  // Future tweak hooks for shader06
+  var sminBlend: Float = 0.03
+  var cellSize: Float = 0.35
+  var sphereAmplitude: Float = 0.15
+  private var padding: Float = 0
 }
 
 public final class Shader06: MSMDrawable {
@@ -25,16 +28,54 @@ public final class Shader06: MSMDrawable {
 
   public func draw(commandEncoder: MTLRenderCommandEncoder) {
     commandEncoder.setRenderPipelineState(pipelineState)
-    // commandEncoder.setFragmentBytes(&params, length: MemoryLayout<Parameters>.stride, index: 1)
+    commandEncoder.setFragmentBytes(&params, length: MemoryLayout<Parameters>.stride, index: 1)
   }
 }
 
 extension Shader06: MSMConfigurableShader {
   public func settingsView() -> AnyView {
     AnyView(
-      Text("Shader06 Settings")
+      VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Blend Radius \(String(format: "%.3f", params.sminBlend))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.sminBlend) },
+            set: { newValue in
+              var updated = self.params
+              updated.sminBlend = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.005...0.50)
+        }
         .foregroundStyle(.white)
-        .padding()
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Cell Size \(String(format: "%.2f", params.cellSize))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.cellSize) },
+            set: { newValue in
+              var updated = self.params
+              updated.cellSize = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.15...0.6)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Z Amplitude \(String(format: "%.2f", params.sphereAmplitude))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.sphereAmplitude) },
+            set: { newValue in
+              var updated = self.params
+              updated.sphereAmplitude = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.05...0.3)
+        }
+        .foregroundStyle(.white)
+      }
+      .padding()
     )
   }
 }

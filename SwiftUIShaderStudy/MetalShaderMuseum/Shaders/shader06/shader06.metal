@@ -9,6 +9,13 @@ constant int MAX_STEPS = 80;
 constant float MAX_DIST = 80.0;
 constant float SURF_DIST = 0.001;
 
+struct Shader06Parameters {
+    float sminBlend;
+    float cellSize;
+    float sphereAmplitude;
+    float padding;
+};
+
 // MARK: - Helpers
 static float3 rotate(float3 p, float3 axis, float angle) {
     axis = normalize(axis);
@@ -38,15 +45,19 @@ static float smin(float a, float b, float k) {
 }
 
 // MARK: - Scene Functions
-static float getRepeatedSpheres(float3 p, float time) {
-    float2 cellSize = float2(0.35, 0.35);
-    float2 baseCell = floor(p.xy / cellSize);
+static float getRepeatedSpheres(float3 p, float time, float cellSize, float amplitude) {
+    float spacing = max(cellSize, 0.05);
+    float2 cell = float2(spacing, spacing);
+    float2 baseCell = floor(p.xy / cell);
     float minDist = 1000.0;
 
-    for (int xi = -1; xi <= 1; ++xi) {
-        for (int yi = -1; yi <= 1; ++yi) {
+    float invRange = 0.8 / spacing;
+    int range = clamp(int(ceil(invRange)), 1, 6);
+
+    for (int xi = -range; xi <= range; ++xi) {
+        for (int yi = -range; yi <= range; ++yi) {
             float2 cellId = baseCell + float2(xi, yi);
-            float2 cellCenter = (cellId + 0.5) * cellSize;
+            float2 cellCenter = (cellId + 0.5) * cell;
             float2 offset = p.xy - cellCenter;
 
             float rotation = dot(cellId, float2(0.37, 0.61));
@@ -54,7 +65,7 @@ static float getRepeatedSpheres(float3 p, float time) {
             float2 local = offset - orbitOffset;
 
             float oscillation = sin(time * 1.3 + rotation * 2.3);
-            float sphereCenterZ = oscillation * 0.15;
+            float sphereCenterZ = oscillation * amplitude;
             float3 sample = float3(local, p.z - sphereCenterZ);
 
             float dist = sdSphere(sample, 0.05);
@@ -65,44 +76,44 @@ static float getRepeatedSpheres(float3 p, float time) {
     return minDist;
 }
 
-static float getDist(float3 p, float time) {
+static float getDist(float3 p, float time, float blend, float cellSize, float amplitude) {
     float planeDist = sdPlaneZ(p, 0.0);
-    float spheres = getRepeatedSpheres(p, time);
-    return smin(planeDist, spheres, 0.03);
+    float spheres = getRepeatedSpheres(p, time, cellSize, amplitude);
+    return smin(planeDist, spheres, blend);
 }
 
-static float rayMarch(float3 ro, float3 rd, float time) {
+static float rayMarch(float3 ro, float3 rd, float time, float blend, float cellSize, float amplitude) {
     float dO = 0.0;
     for (int i = 0; i < MAX_STEPS; ++i) {
         float3 p = ro + rd * dO;
-        float dS = getDist(p, time);
+        float dS = getDist(p, time, blend, cellSize, amplitude);
         dO += dS;
         if (dO > MAX_DIST || abs(dS) < SURF_DIST) break;
     }
     return dO;
 }
 
-static float3 getNormal(float3 p, float time) {
-    float d = getDist(p, time);
+static float3 getNormal(float3 p, float time, float blend, float cellSize, float amplitude) {
+    float d = getDist(p, time, blend, cellSize, amplitude);
     float2 e = float2(0.001, 0.0);
     float3 n = d - float3(
-        getDist(p - e.xyy, time),
-        getDist(p - e.yxy, time),
-        getDist(p - e.yyx, time)
+        getDist(p - e.xyy, time, blend, cellSize, amplitude),
+        getDist(p - e.yxy, time, blend, cellSize, amplitude),
+        getDist(p - e.yyx, time, blend, cellSize, amplitude)
     );
     return normalize(n);
 }
 
-static float3 getLight(float3 p, float3 rd, float time) {
+static float3 getLight(float3 p, float3 rd, float time, float blend, float cellSize, float amplitude) {
     float3 lightPos = float3(-1.2, 1.8, 1.6);
     float3 l = normalize(lightPos - p);
-    float3 n = getNormal(p, time);
+    float3 n = getNormal(p, time, blend, cellSize, amplitude);
 
     float dif = clamp(dot(n, l), 0.0, 1.0);
     float3 halfVec = normalize(l - rd);
     float spec = pow(clamp(dot(n, halfVec), 0.0, 1.0), 32.0);
 
-    float sphereField = getRepeatedSpheres(p, time);
+    float sphereField = getRepeatedSpheres(p, time, cellSize, amplitude);
     float sphereMask = 1.0 - smoothstep(-0.01, 0.05, sphereField);
 
     float3 planeColor = float3(0.35, 0.36, 0.38);
@@ -114,7 +125,8 @@ static float3 getLight(float3 p, float3 rd, float time) {
 }
 
 fragment float4 shader06Fragment(VertexOut data [[stage_in]],
-                                 constant ShaderCommonUniform *uniform [[buffer(0)]]) {
+                                 constant ShaderCommonUniform *uniform [[buffer(0)]],
+                                 constant Shader06Parameters *params [[buffer(1)]]) {
     float2 uv = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
     uv.y = -uv.y;
 
@@ -131,12 +143,15 @@ fragment float4 shader06Fragment(VertexOut data [[stage_in]],
     rd = rotate(rd, float3(1, 0, 0), -rot.y);
     rd = rotate(rd, float3(0, 1, 0), -rot.x);
 
-    float dist = rayMarch(ro, rd, uniform->time);
+    float blend = params ? params->sminBlend : 0.03;
+    float cellSize = params ? params->cellSize : 0.35;
+    float amplitude = params ? params->sphereAmplitude : 0.15;
+    float dist = rayMarch(ro, rd, uniform->time, blend, cellSize, amplitude);
     float3 col = float3(0.18, 0.19, 0.22);
 
     if (dist < MAX_DIST) {
         float3 p = ro + rd * dist;
-        col = getLight(p, rd, uniform->time);
+        col = getLight(p, rd, uniform->time, blend, cellSize, amplitude);
         col = mix(col, float3(0.1, 0.11, 0.13), 1.0 - exp(-0.04 * dist));
     }
 
