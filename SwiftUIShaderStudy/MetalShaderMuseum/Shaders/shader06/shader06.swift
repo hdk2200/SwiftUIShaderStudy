@@ -5,7 +5,7 @@ public struct Shader06Parameters {
   var sminBlend: Float = 0.03
   var cellSize: Float = 0.35
   var sphereAmplitude: Float = 0.15
-  private var padding: Float = 0
+  var oscillationSpeed: Float = 1.3
 }
 
 public final class Shader06: MSMDrawable {
@@ -72,6 +72,19 @@ extension Shader06: MSMConfigurableShader {
               self.setParameters(updated)
             }
           ), in: 0.05...0.3)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Motion Speed \(String(format: "%.2f", params.oscillationSpeed))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.oscillationSpeed) },
+            set: { newValue in
+              var updated = self.params
+              updated.oscillationSpeed = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.2...3.0)
         }
         .foregroundStyle(.white)
       }
