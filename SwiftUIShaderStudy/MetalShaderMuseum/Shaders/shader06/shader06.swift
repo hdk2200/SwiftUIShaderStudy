@@ -4,8 +4,9 @@ import SwiftUI
 public struct Shader06Parameters {
   var sminBlend: Float = 0.03
   var cellSize: Float = 0.35
-  var sphereAmplitude: Float = 0.15
+  var sphereAmplitude: Float = 10.0
   var oscillationSpeed: Float = 1.3
+  var sphereRadius: Float = 0.05
 }
 
 public final class Shader06: MSMDrawable {
@@ -45,7 +46,7 @@ extension Shader06: MSMConfigurableShader {
               updated.sminBlend = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.005...0.50)
+          ), in: 0.005...1.00)
         }
         .foregroundStyle(.white)
 
@@ -58,12 +59,12 @@ extension Shader06: MSMConfigurableShader {
               updated.cellSize = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.15...0.6)
+          ), in: 0.15...1.0)
         }
         .foregroundStyle(.white)
 
         VStack(alignment: .leading, spacing: 4) {
-          Text("Z Amplitude \(String(format: "%.2f", params.sphereAmplitude))")
+          Text("Z Range ±\(String(format: "%.1f", params.sphereAmplitude))")
           Slider(value: Binding<Double>(
             get: { Double(self.params.sphereAmplitude) },
             set: { newValue in
@@ -71,7 +72,7 @@ extension Shader06: MSMConfigurableShader {
               updated.sphereAmplitude = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.05...0.3)
+          ), in: 1.0...15.0)
         }
         .foregroundStyle(.white)
 
@@ -84,11 +85,30 @@ extension Shader06: MSMConfigurableShader {
               updated.oscillationSpeed = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.2...3.0)
+          ), in: 0.01...3.0)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Sphere Radius \(String(format: "%.3f", params.sphereRadius))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.sphereRadius) },
+            set: { newValue in
+              var updated = self.params
+              updated.sphereRadius = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.02...0.5)
         }
         .foregroundStyle(.white)
       }
       .padding()
     )
+  }
+}
+
+extension Shader06 {
+  public var preferredSettingsDetents: [PresentationDetent] {
+    [.fraction(0.45), .fraction(0.65), .large]
   }
 }

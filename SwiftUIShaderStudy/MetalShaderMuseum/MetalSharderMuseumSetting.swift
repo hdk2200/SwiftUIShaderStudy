@@ -5,55 +5,45 @@ struct MetalSharderMuseumSetting: View {
   @ObservedObject var renderer: MSMRenderer
 
   var body: some View {
-    VStack(alignment: .center, spacing: 1) {
-      Spacer().frame(height: 20)
+    VStack(spacing: 16) {
       HStack {
         Spacer()
-        
-        Button(action: {
-          showSettings = false
-        }) {
-          ZStack {
-            //            Circle()
-            //              .fill(Color.gray.opacity(0.7))
-            //              .frame(width: 60, height: 60)
-            Image(systemName: "xmark.circle")
-              .resizable()
-              .aspectRatio(contentMode: .fit)
-              .frame(width:24, height: 24) // Hamburgerアイコンのサイズを設定します
-              .foregroundColor(.white) // Hamburgerアイコンの色を指定します
-          }
-        }.padding(.trailing, 16)
-        
+        Button(action: { showSettings = false }) {
+          Image(systemName: "xmark.circle")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 24, height: 24)
+            .foregroundColor(.white)
+        }
       }
-      
+      .padding(.top, 12)
+
       if let configurable = renderer.currentShader as? MSMConfigurableShader {
-        configurable.settingsView()
+        ScrollView {
+          configurable.settingsView()
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
       } else {
         Text("No configurable settings for current shader")
           .foregroundStyle(.secondary)
-          .padding(.top, 8)
       }
-    }
 
-    
-    Spacer()
-    
-    Button(action: {
-      renderer.resetInteraction()
-    }) {
-      HStack {
-        Image(systemName: "arrow.counterclockwise")
-        Text("Reset Interaction")
+      Button(action: {
+        renderer.resetInteraction()
+      }) {
+        HStack {
+          Image(systemName: "arrow.counterclockwise")
+          Text("Reset Interaction")
+        }
+        .foregroundColor(.white)
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color.gray.opacity(0.8))
+        .cornerRadius(10)
       }
-      .foregroundColor(.white)
-      .padding()
-      .background(Color.gray.opacity(0.8))
-      .cornerRadius(10)
     }
-    .padding(.bottom, 20)
-    
-    Spacer()
+    .padding(.horizontal, 20)
+    .padding(.bottom, 16)
   }
 //      .border(Color.red, width: 1)
 //
@@ -76,4 +66,3 @@ struct MetalSharderMuseumSetting: View {
 //    }
 //  }
 }
-

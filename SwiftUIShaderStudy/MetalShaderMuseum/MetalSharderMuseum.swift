@@ -51,7 +51,8 @@ struct MetalSharderMuseum: View {
                 showSettings: $showSettings,
                 renderer: renderer
               )
-              .presentationDetents([.fraction(0.3)])
+              .presentationDetents(currentSettingsDetents)
+              .presentationDragIndicator(.visible)
             }
           }
           .padding(.trailing, 32)
@@ -88,6 +89,15 @@ struct MetalSharderMuseum: View {
 
   private var activeShaderID: String? {
     shaderOptions.first(where: { $0.matches(renderer.currentShader) })?.id
+  }
+
+  private var currentSettingsDetents: Set<PresentationDetent> {
+    if let configurable = renderer.currentShader as? MSMConfigurableShader {
+      let detents = configurable.preferredSettingsDetents
+      let normalized = detents.isEmpty ? [.fraction(0.35)] : detents
+      return Set(normalized)
+    }
+    return [.fraction(0.35), .fraction(0.6)]
   }
 
   private func selectShader(_ option: ShaderOption) {
@@ -254,5 +264,4 @@ private struct FloatingShaderButtonLabel: View {
     }
   }
 }
-
 

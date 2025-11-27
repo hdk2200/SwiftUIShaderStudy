@@ -10,4 +10,11 @@ public protocol MSMDrawable {
 
 public protocol MSMConfigurableShader {
   func settingsView() -> AnyView
+  var preferredSettingsDetents: [PresentationDetent] { get }
+}
+
+public extension MSMConfigurableShader {
+  var preferredSettingsDetents: [PresentationDetent] {
+    [.fraction(0.35), .fraction(0.55)]
+  }
 }

@@ -14,6 +14,7 @@ struct Shader06Parameters {
     float cellSize;
     float sphereAmplitude;
     float oscillationSpeed;
+    float sphereRadius;
 };
 
 // MARK: - Helpers
@@ -43,7 +44,8 @@ static float sampleSphereCell(float3 p,
                               float2 cellId,
                               float time,
                               float amplitude,
-                              float speed) {
+                              float speed,
+                              float radius) {
     float rotation = dot(cellId, float2(0.37, 0.61));
     float s = sin(rotation);
     float c = cos(rotation);
@@ -52,15 +54,17 @@ static float sampleSphereCell(float3 p,
 
     float2 local = offset - orbitOffset;
     float freq = max(speed, 0.05);
-    float oscillation = sin(time * freq + rotation * 2.3);
-    float sphereCenterZ = oscillation * amplitude;
+    float normalized = fract(time * freq + rotation * 0.31);
+    normalized = min(normalized + 0.001, 1.0);
+    float sphereCenterZ = mix(-amplitude, amplitude, normalized);
     float3 sample = float3(local, p.z - sphereCenterZ);
 
-    return sdSphere(sample, 0.05);
+    float clampedRadius = clamp(radius, 0.02, 0.15);
+    return sdSphere(sample, clampedRadius);
 }
 
 // MARK: - Scene Functions
-static float getRepeatedSpheres(float3 p, float time, float cellSize, float amplitude, float speed) {
+static float getRepeatedSpheres(float3 p, float time, float cellSize, float amplitude, float speed, float radius) {
     float spacing = clamp(cellSize, 0.15, 0.8);
     float2 cell = float2(spacing, spacing);
     float2 gridCoord = (p.xy + cell * 0.5) / cell;
@@ -73,52 +77,52 @@ static float getRepeatedSpheres(float3 p, float time, float cellSize, float ampl
     float2 shiftX = float2(axisSign.x, 0.0) * cell;
     float2 shiftY = float2(0.0, axisSign.y) * cell;
 
-    minDist = min(minDist, sampleSphereCell(p, local, baseId, time, amplitude, speed));
-    minDist = min(minDist, sampleSphereCell(p, local - shiftX, baseId + float2(axisSign.x, 0.0), time, amplitude, speed));
-    minDist = min(minDist, sampleSphereCell(p, local - shiftY, baseId + float2(0.0, axisSign.y), time, amplitude, speed));
-    minDist = min(minDist, sampleSphereCell(p, local - shiftX - shiftY, baseId + axisSign, time, amplitude, speed));
+    minDist = min(minDist, sampleSphereCell(p, local, baseId, time, amplitude, speed, radius));
+    minDist = min(minDist, sampleSphereCell(p, local - shiftX, baseId + float2(axisSign.x, 0.0), time, amplitude, speed, radius));
+    minDist = min(minDist, sampleSphereCell(p, local - shiftY, baseId + float2(0.0, axisSign.y), time, amplitude, speed, radius));
+    minDist = min(minDist, sampleSphereCell(p, local - shiftX - shiftY, baseId + axisSign, time, amplitude, speed, radius));
 
     return minDist;
 }
 
-static float getDist(float3 p, float time, float blend, float cellSize, float amplitude, float speed) {
+static float getDist(float3 p, float time, float blend, float cellSize, float amplitude, float speed, float radius) {
     float planeDist = sdPlaneZ(p, 0.0);
-    float spheres = getRepeatedSpheres(p, time, cellSize, amplitude, speed);
+    float spheres = getRepeatedSpheres(p, time, cellSize, amplitude, speed, radius);
     return smin(planeDist, spheres, blend);
 }
 
-static float rayMarch(float3 ro, float3 rd, float time, float blend, float cellSize, float amplitude, float speed) {
+static float rayMarch(float3 ro, float3 rd, float time, float blend, float cellSize, float amplitude, float speed, float radius) {
     float dO = 0.0;
     for (int i = 0; i < MAX_STEPS; ++i) {
         float3 p = ro + rd * dO;
-        float dS = getDist(p, time, blend, cellSize, amplitude, speed);
+        float dS = getDist(p, time, blend, cellSize, amplitude, speed, radius);
         dO += dS;
         if (dO > MAX_DIST || abs(dS) < SURF_DIST) break;
     }
     return dO;
 }
 
-static float3 getNormal(float3 p, float time, float blend, float cellSize, float amplitude, float speed) {
-    float d = getDist(p, time, blend, cellSize, amplitude, speed);
+static float3 getNormal(float3 p, float time, float blend, float cellSize, float amplitude, float speed, float radius) {
+    float d = getDist(p, time, blend, cellSize, amplitude, speed, radius);
     float2 e = float2(0.001, 0.0);
     float3 n = d - float3(
-        getDist(p - e.xyy, time, blend, cellSize, amplitude, speed),
-        getDist(p - e.yxy, time, blend, cellSize, amplitude, speed),
-        getDist(p - e.yyx, time, blend, cellSize, amplitude, speed)
+        getDist(p - e.xyy, time, blend, cellSize, amplitude, speed, radius),
+        getDist(p - e.yxy, time, blend, cellSize, amplitude, speed, radius),
+        getDist(p - e.yyx, time, blend, cellSize, amplitude, speed, radius)
     );
     return normalize(n);
 }
 
-static float3 getLight(float3 p, float3 rd, float time, float blend, float cellSize, float amplitude, float speed) {
+static float3 getLight(float3 p, float3 rd, float time, float blend, float cellSize, float amplitude, float speed, float radius) {
     float3 lightPos = float3(-1.2, 1.8, 1.6);
     float3 l = normalize(lightPos - p);
-    float3 n = getNormal(p, time, blend, cellSize, amplitude, speed);
+    float3 n = getNormal(p, time, blend, cellSize, amplitude, speed, radius);
 
     float dif = clamp(dot(n, l), 0.0, 1.0);
     float3 halfVec = normalize(l - rd);
     float spec = pow(clamp(dot(n, halfVec), 0.0, 1.0), 32.0);
 
-    float sphereField = getRepeatedSpheres(p, time, cellSize, amplitude, speed);
+    float sphereField = getRepeatedSpheres(p, time, cellSize, amplitude, speed, radius);
     float sphereMask = 1.0 - smoothstep(-0.01, 0.05, sphereField);
 
     float3 planeColor = float3(0.35, 0.36, 0.38);
@@ -152,12 +156,13 @@ fragment float4 shader06Fragment(VertexOut data [[stage_in]],
     float cellSize = params ? params->cellSize : 0.35;
     float amplitude = params ? params->sphereAmplitude : 0.15;
     float speed = params ? params->oscillationSpeed : 1.3;
-    float dist = rayMarch(ro, rd, uniform->time, blend, cellSize, amplitude, speed);
+    float radius = params ? params->sphereRadius : 0.05;
+    float dist = rayMarch(ro, rd, uniform->time, blend, cellSize, amplitude, speed, radius);
     float3 col = float3(0.18, 0.19, 0.22);
 
     if (dist < MAX_DIST) {
         float3 p = ro + rd * dist;
-        col = getLight(p, rd, uniform->time, blend, cellSize, amplitude, speed);
+        col = getLight(p, rd, uniform->time, blend, cellSize, amplitude, speed, radius);
         col = mix(col, float3(0.1, 0.11, 0.13), 1.0 - exp(-0.04 * dist));
     }
 
