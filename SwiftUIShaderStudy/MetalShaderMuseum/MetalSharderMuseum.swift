@@ -200,6 +200,17 @@ private struct ShaderOption: Identifiable {
       },
       matches: { $0 is Shader06 }
     ),
+    ShaderOption(
+      id: "Shader07",
+      title: "Shader07 (Geometric Sphere)",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try Shader07(device: device, library: library)
+      },
+      matches: { $0 is Shader07 }
+    ),
   ]
 }
 
@@ -235,7 +246,7 @@ private struct ShaderPickerSheet: View {
               }
               .foregroundColor(.white)
               .padding()
-              .frame(maxWidth: .infinity, minHeight: 90)
+              .frame(maxWidth: .infinity, minHeight: 45)
               .background(
                 RoundedRectangle(cornerRadius: 14)
                   .fill(isSelected ? Color.accentColor.opacity(0.5) : Color.white.opacity(0.15))
