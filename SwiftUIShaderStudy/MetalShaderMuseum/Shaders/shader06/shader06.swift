@@ -85,7 +85,7 @@ extension Shader06: MSMConfigurableShader {
               updated.oscillationSpeed = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.01...3.0)
+          ), in: 0.001...1.0)
         }
         .foregroundStyle(.white)
 
