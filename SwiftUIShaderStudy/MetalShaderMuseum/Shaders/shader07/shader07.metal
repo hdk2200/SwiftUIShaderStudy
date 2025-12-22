@@ -18,74 +18,34 @@ struct Shader07Parameters {
 
 // MARK: - SDF Functions
 
+// Smooth Minimum (Polynomial)
+static float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+
 static float sdSphere(float3 p, float s) {
     return length(p) - s;
 }
 
-static float geometricPattern(float3 p, float scale, float width) {
-    // Create a grid-like pattern on the sphere
-    // Use sine waves to create a lattice
-    float3 q = p * scale;
-    
-    // Pattern 1: Cubic lattice
-    // float val = max(abs(sin(q.x)), max(abs(sin(q.y)), abs(sin(q.z))));
-    
-    // Pattern 2: Smoother grid
-    float val = sin(q.x) * sin(q.y) * sin(q.z);
-    
-    // Map to 0-1 range roughly
-    val = val * 0.5 + 0.5;
-    
-    // Create grooves: when val is close to specific values (e.g. 0.5)
-    // Let's try to make "grooves" where the sine waves intersect or peak
-    
-    // Simple approach:
-    // abs(sin(x)) creates peaks.
-    // max(abs(sin(x)), abs(sin(y))...) creates a grid structure.
-    
-    float3 s = abs(sin(q));
-    float grid = max(s.x, max(s.y, s.z));
-    
-    // Invert so that high values are "surface" and low values are "grooves"
-    // or vice versa.
-    // Let's say we want grooves.
-    // If we subtract this pattern from the sphere radius, we get cuts.
-    
-    // Let's use a smoothstep to define the groove width
-    // width 0.0 -> 1.0
-    // We want a value that is 1.0 (no cut) most places, and 0.0 (deep cut) in grooves.
-    
-    float groove = smoothstep(width, width + 0.1, grid);
-    
-    return groove;
-}
-
 static float getDist(float3 p, float time, float radius, float grooveWidth, float patternScale, float bumpHeight) {
-    float dSphere = sdSphere(p, radius);
+    // Central sphere (fixed size 0.3 as requested)
+    float d1 = sdSphere(p, 0.3);
     
-    // Rotate pattern over time
-    float t = time * 0.2;
-    float c = cos(t);
-    float s = sin(t);
-    float3 q = p;
-    q.xz = float2(q.x * c - q.z * s, q.x * s + q.z * c);
+    // Moving sphere (size 0.1)
+    // Move in a Lissajous-like curve or just complex orbit passing through zero
+    float t = time;
+    float3 pos2 = float3(sin(t * 1.5), sin(t * 1.2) * cos(t * 0.8), cos(t * 0.5));
+    // Scale movement to keep it somewhat near center but passing through
+    pos2 *= 0.6; 
     
-    float pattern = geometricPattern(q, patternScale, grooveWidth);
+    float d2 = sdSphere(p - pos2, 0.1);
     
-    // Apply displacement
-    // We want the pattern to carve INTO the sphere or stick OUT.
-    // Let's make it stick out or carve in based on bumpHeight.
-    // If bumpHeight is positive, it sticks out.
+    // Smooth blending
+    // k controls the smoothness of the blend.
+    float k = 0.2;
     
-    // pattern is 0..1.
-    // 1.0 = full height, 0.0 = base level.
-    
-    float displacement = pattern * bumpHeight;
-    
-    // We subtract displacement from distance to add material
-    // d = sphere - displacement
-    
-    return dSphere - displacement;
+    return smin(d1, d2, k);
 }
 
 static float rayMarch(float3 ro, float3 rd, float time, float radius, float grooveWidth, float patternScale, float bumpHeight) {
@@ -119,26 +79,10 @@ static float3 getLight(float3 p, float3 rd, float time, float radius, float groo
     float3 halfVec = normalize(l - rd);
     float spec = pow(clamp(dot(n, halfVec), 0.0, 1.0), 32.0);
     
-    // Color
-    // Make grooves darker or different color?
-    // We can re-calculate the pattern value to decide color.
-    
-    // Re-calc pattern for coloring
-    float t = time * 0.2;
-    float c = cos(t);
-    float s = sin(t);
-    float3 q = p;
-    q.xz = float2(q.x * c - q.z * s, q.x * s + q.z * c);
-    float pattern = geometricPattern(q, patternScale, grooveWidth);
-    
-    float3 surfaceColor = float3(0.8, 0.3, 0.2); // Reddish
-    float3 grooveColor = float3(0.1, 0.1, 0.1);  // Dark
-    
-    float3 col = mix(grooveColor, surfaceColor, pattern);
-    
-    float3 amb = float3(0.1);
-    
-    return col * (amb + dif) + spec * 0.5;
+    float3 surfaceColor = float3(0.2, 0.6, 1.0); // Blueish
+    float3 amb = float3(0.5, 0.6, 0.7) * 0.2;
+    float3 col = surfaceColor * (amb + dif) + spec * 0.5;
+    return col;
 }
 
 // MARK: - Main Fragment Shader
