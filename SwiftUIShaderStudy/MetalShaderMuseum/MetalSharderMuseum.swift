@@ -27,76 +27,80 @@ struct MetalSharderMuseum: View {
   private let shaderOptions = ShaderOption.available
 
   var body: some View {
-    VStack(spacing: 0) {
-      ZStack {
-        MSMView(renderer: renderer)
-          .edgesIgnoringSafeArea(.all)
+    GeometryReader { geometry in
+      VStack(spacing: 0) {
+        ZStack {
+          MSMView(renderer: renderer)
+            .edgesIgnoringSafeArea(.all)
 
-        // Shader selection + settings buttons
-        VStack {
-          Spacer()
-          HStack {
+          // Shader selection + settings buttons
+          VStack {
             Spacer()
-            VStack(spacing: 16) {
-              Button(action: {
-                withAnimation(.spring()) {
-                  bottomViewState = (bottomViewState == .shaderPicker) ? .none : .shaderPicker
-                }
-              }) {
-                FloatingShaderButtonLabel()
-              }
-
-              FloatingSettingsButton(isPresented: Binding(
-                get: { bottomViewState == .settings },
-                set: { val in
+            HStack {
+              Spacer()
+              VStack(spacing: 16) {
+                Button(action: {
                   withAnimation(.spring()) {
-                    bottomViewState = val ? .settings : .none
+                    bottomViewState = (bottomViewState == .shaderPicker) ? .none : .shaderPicker
                   }
+                }) {
+                  FloatingShaderButtonLabel()
                 }
-              )) {
-                EmptyView()
+
+                FloatingSettingsButton(isPresented: Binding(
+                  get: { bottomViewState == .settings },
+                  set: { val in
+                    withAnimation(.spring()) {
+                      bottomViewState = val ? .settings : .none
+                    }
+                  }
+                )) {
+                  EmptyView()
+                }
+              }
+              .padding(.trailing, 16)
+              .padding(.bottom, 16)
+            }
+          }
+
+          VStack {
+            Spacer()
+            let fpsstr = String(format: "%.1f", renderer.fps)
+            Text("fps: \(fpsstr)")
+              .foregroundStyle(.secondary)
+              .padding(.horizontal, 8)
+              .background(.ultraThinMaterial)
+              .cornerRadius(4)
+              .padding(.bottom, 24)
+          }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(maxHeight: bottomViewState != .none ? geometry.size.height * 0.5 : .infinity)
+
+        if bottomViewState == .settings {
+          MetalSharderMuseumSetting(
+            showSettings: Binding(
+              get: { bottomViewState == .settings },
+              set: { val in bottomViewState = val ? .settings : .none }
+            ),
+            renderer: renderer
+          )
+          .frame(maxHeight: geometry.size.height * 0.5)
+          .transition(.move(edge: .bottom).combined(with: .opacity))
+        } else if bottomViewState == .shaderPicker {
+          ShaderPickerView(
+            options: shaderOptions,
+            selectedOptionID: activeShaderID,
+            onSelect: { option in selectShader(option) },
+            onClose: {
+              withAnimation(.spring()) {
+                bottomViewState = .none
               }
             }
-            .padding(.trailing, 16)
-            .padding(.bottom, 16)
-          }
+          )
+          .frame(maxHeight: geometry.size.height * 0.5)
+          .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-
-        VStack {
-          Spacer()
-          let fpsstr = String(format: "%.1f", renderer.fps)
-          Text("fps: \(fpsstr)")
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .background(.ultraThinMaterial)
-            .cornerRadius(4)
-            .padding(.bottom, 24)
-        }
-      }
-      .frame(maxWidth: .infinity)
-      .frame(maxHeight: bottomViewState != .none ? UIScreen.main.bounds.height * 0.5 : .infinity)
-
-      if bottomViewState == .settings {
-        MetalSharderMuseumSetting(
-          showSettings: Binding(
-            get: { bottomViewState == .settings },
-            set: { val in bottomViewState = val ? .settings : .none }
-          ),
-          renderer: renderer
-        )
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-      } else if bottomViewState == .shaderPicker {
-        ShaderPickerView(
-          options: shaderOptions,
-          selectedOptionID: activeShaderID,
-          onSelect: { option in selectShader(option) },
-          onClose: {
-            withAnimation(.spring()) {
-              bottomViewState = .none
-            }
-          }
-        )
-        .transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
     .animation(.spring(), value: bottomViewState)
