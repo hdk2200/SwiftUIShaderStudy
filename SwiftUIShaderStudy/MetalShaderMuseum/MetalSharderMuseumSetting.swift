@@ -13,7 +13,7 @@ struct MetalSharderMuseumSetting: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 24, height: 24)
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
         }
       }
       .padding(.top, 12)
@@ -35,10 +35,10 @@ struct MetalSharderMuseumSetting: View {
           Image(systemName: "arrow.counterclockwise")
           Text("Reset Interaction")
         }
-        .foregroundColor(.white)
+        .foregroundColor(.primary)
         .padding()
         .frame(maxWidth: .infinity)
-        .background(Color.gray.opacity(0.8))
+        .background(.thinMaterial)
         .cornerRadius(10)
       }
     }

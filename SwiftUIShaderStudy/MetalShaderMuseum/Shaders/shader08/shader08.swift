@@ -84,7 +84,7 @@ private struct Shader08SettingsView: View {
           }
         ), in: 0.001...1.0)
       }
-      .foregroundStyle(.white)
+//      .foregroundStyle(.white)
 
       // Max Steps
       VStack(alignment: .leading, spacing: 4) {
@@ -98,7 +98,7 @@ private struct Shader08SettingsView: View {
           }
         ), in: 10...200, step: 1)
       }
-      .foregroundStyle(.white)
+//      .foregroundStyle(.white)
 
       // Hit Threshold
       VStack(alignment: .leading, spacing: 4) {
@@ -112,7 +112,7 @@ private struct Shader08SettingsView: View {
           }
         ), in: 0.0001...0.01)
       }
-      .foregroundStyle(.white)
+//      .foregroundStyle(.white)
 
       // Max Dist
       VStack(alignment: .leading, spacing: 4) {
@@ -126,7 +126,7 @@ private struct Shader08SettingsView: View {
           }
         ), in: 10.0...100.0)
       }
-      .foregroundStyle(.white)
+//      .foregroundStyle(.white)
       
       Spacer()
     }

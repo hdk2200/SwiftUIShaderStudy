@@ -12,13 +12,13 @@ struct FloatingSettingsButton<Content: View>: View {
     Button(action: { isPresented = true }) {
       ZStack {
         Circle()
-          .fill(Color.gray.opacity(0.7))
+          .fill(.thinMaterial)
           .frame(width: 60, height: 60)
         Image(systemName: "line.horizontal.3")
           .resizable()
           .aspectRatio(contentMode: .fit)
           .frame(width: 30, height: 10)
-          .foregroundColor(.white)
+          .foregroundColor(.primary)
       }
     }
     .sheet(isPresented: $isPresented, content: content)

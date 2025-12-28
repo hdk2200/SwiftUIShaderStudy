@@ -61,7 +61,10 @@ struct MetalSharderMuseum: View {
         Spacer()
         let fpsstr = String(format: "%.1f", renderer.fps)
         Text("fps: \(fpsstr)")
-          .foregroundStyle(Color.white)
+          .foregroundStyle(.secondary)
+          .padding(.horizontal, 8)
+          .background(.ultraThinMaterial)
+          .cornerRadius(4)
           .padding(.bottom, 24)
       }
     }
@@ -237,8 +240,7 @@ private struct ShaderPickerSheet: View {
 
       ScrollView {
         LazyVGrid(columns: columns, spacing: 16) {
-          ForEach(options) { option in
-            let isSelected = option.id == selectedOptionID
+            ForEach(options) { option in
             Button(action: { onSelect(option) }) {
               VStack {
                 Text(option.title)
@@ -246,10 +248,10 @@ private struct ShaderPickerSheet: View {
                   .fontWeight(.semibold)
                   .frame(maxWidth: .infinity, alignment: .center)
                   .padding(.bottom, 4)
-                if isSelected {
+                if option.id == (selectedOptionID ?? "") {
                   Text("Selected")
                     .font(.caption)
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .foregroundStyle(.secondary)
                 }
               }
               .foregroundColor(.primary)
@@ -257,7 +259,7 @@ private struct ShaderPickerSheet: View {
               .frame(maxWidth: .infinity, minHeight: 45)
               .background(
                 RoundedRectangle(cornerRadius: 14)
-                  .fill(isSelected ? Color.accentColor.opacity(0.5) : Color.white.opacity(0.15))
+                  .fill(option.id == (selectedOptionID ?? "") ? AnyShapeStyle(Color.accentColor.opacity(0.3)) : AnyShapeStyle(.ultraThinMaterial))
               )
             }
             .buttonStyle(.plain)
@@ -277,9 +279,9 @@ private struct FloatingShaderButtonLabel: View {
       Circle()
         .fill(Color.accentColor.opacity(0.85))
         .frame(width: 60, height: 60)
-      Image(systemName: "sparkles")
-        .font(.system(size: 26, weight: .semibold))
-        .foregroundColor(.white)
+        Image(systemName: "sparkles")
+          .font(.system(size: 26, weight: .semibold))
+          .foregroundColor(.primary)
     }
   }
 }

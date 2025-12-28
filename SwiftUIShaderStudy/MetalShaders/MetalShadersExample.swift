@@ -24,13 +24,12 @@ struct SettingsView: View {
             Image(systemName: "xmark.circle")
               .resizable()
               .aspectRatio(contentMode: .fit)
-              .frame(width:24, height: 24) // Hamburgerアイコンのサイズを設定します
-              .foregroundColor(.white) // Hamburgerアイコンの色を指定します
+              .frame(width:24, height: 24)
+              .foregroundColor(.primary)
           }
         }.padding(.trailing, 16)
         
       }
-//      .border(Color.red, width: 1)
       
       List {
         ForEach(ShaderType.allCases, id: \.self) { item in
@@ -43,9 +42,7 @@ struct SettingsView: View {
         }
       }
       .scrollContentBackground(.hidden)
-//      .background(Color.gray.opacity(0.5))
-//      .border(Color.red, width: 1)
-    }.background(Color.gray.opacity(0.5))
+    }.background(.regularMaterial)
   }
 }
 
@@ -71,24 +68,20 @@ struct MetalShadersExample: View {
           }) {
             ZStack {
               Circle()
-                .fill(Color.gray.opacity(0.7))
+                .fill(.thinMaterial)
                 .frame(width: 60, height: 60)
               Image(systemName: "line.horizontal.3")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 30, height: 10) // Hamburgerアイコンのサイズを設定します
-                .foregroundColor(.white) // Hamburgerアイコンの色を指定します
+                .frame(width: 30, height: 10)
+                .foregroundColor(.primary)
             }
           }
-//          .buttonStyle(.bordered)
-//          .buttonBorderShape(.capsule)
           .sheet(isPresented: $showSettings) {
             SettingsView(showSettings: $showSettings,
                          shaderType: $shaderType)
 
-              //            .presentationDetents([.medium, .large])
               .presentationDetents([.fraction(0.3)])
-//              .presentationBackground(Color.clear)
           }
           .padding(.trailing, 32)
         }
@@ -100,14 +93,14 @@ struct MetalShadersExample: View {
             
             Text("\(shaderType.name)")
               .padding(.horizontal, 8)
-              .foregroundColor(.white)
+              .foregroundColor(.primary)
             Text("FPS: \(String(format: "%.1f", fps))")
               .padding(.horizontal, 8)
               .frame(width:96)
-              .foregroundColor(.white)
-//            .border(Color.black, width: 1)
+              .foregroundColor(.primary)
           }
-          .background(.red.opacity(0.3))
+          .background(.ultraThinMaterial)
+          .cornerRadius(8)
           .padding(.horizontal, 32)
         }
         .frame(height: 32)
