@@ -48,7 +48,7 @@ extension Shader06: MSMConfigurableShader {
             }
           ), in: 0.005...1.00)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Cell Size \(String(format: "%.2f", params.cellSize))")
@@ -61,7 +61,7 @@ extension Shader06: MSMConfigurableShader {
             }
           ), in: 0.15...1.0)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Z Range ±\(String(format: "%.1f", params.sphereAmplitude))")
@@ -74,7 +74,7 @@ extension Shader06: MSMConfigurableShader {
             }
           ), in: 1.0...10.0)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Motion Speed \(String(format: "%.2f", params.oscillationSpeed))")
@@ -87,7 +87,7 @@ extension Shader06: MSMConfigurableShader {
             }
           ), in: 0.001...0.5)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Sphere Radius \(String(format: "%.3f", params.sphereRadius))")
@@ -100,7 +100,7 @@ extension Shader06: MSMConfigurableShader {
             }
           ), in: 0.02...0.5)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
       }
       .padding()
     )

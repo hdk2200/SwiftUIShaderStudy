@@ -57,7 +57,7 @@ private struct Shader08SettingsView: View {
       // Blend Mode
       VStack(alignment: .leading, spacing: 8) {
         Text("Blend Mode")
-          .foregroundStyle(.white)
+          .foregroundStyle(.primary)
         
         Picker("Blend Mode", selection: Binding<Int>(
           get: { Int(shader.params.blendMode) },

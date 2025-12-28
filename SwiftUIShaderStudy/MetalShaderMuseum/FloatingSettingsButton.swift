@@ -21,6 +21,5 @@ struct FloatingSettingsButton<Content: View>: View {
           .foregroundColor(.primary)
       }
     }
-    .sheet(isPresented: $isPresented, content: content)
   }
 }

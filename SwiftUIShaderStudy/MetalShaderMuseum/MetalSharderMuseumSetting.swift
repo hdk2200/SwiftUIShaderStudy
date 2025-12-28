@@ -5,46 +5,84 @@ struct MetalSharderMuseumSetting: View {
   @ObservedObject var renderer: MSMRenderer
 
   var body: some View {
-    VStack(spacing: 16) {
+    VStack(spacing: 0) {
+      // Header with title and close button (optional but good for clarity)
       HStack {
+        Text("Shader Settings")
+          .font(.headline)
         Spacer()
-        Button(action: { showSettings = false }) {
-          Image(systemName: "xmark.circle")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 24, height: 24)
+        Button(action: {
+          withAnimation(.spring()) {
+            showSettings = false
+          }
+        }) {
+          Image(systemName: "xmark.circle.fill")
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(.secondary)
+            .font(.title2)
+        }
+      }
+      .padding()
+      .background(.thinMaterial)
+
+      ScrollView {
+        VStack(spacing: 24) {
+          if let configurable = renderer.currentShader as? MSMConfigurableShader {
+            configurable.settingsView()
+              .frame(maxWidth: .infinity, alignment: .leading)
+          } else {
+            Text("No configurable settings for current shader")
+              .foregroundStyle(.secondary)
+              .padding()
+          }
+
+          Divider()
+
+          Button(action: {
+            renderer.resetInteraction()
+          }) {
+            HStack {
+              Image(systemName: "arrow.counterclockwise")
+              Text("Reset Interaction")
+            }
+            .fontWeight(.semibold)
             .foregroundColor(.primary)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.accentColor.opacity(0.15))
+            .cornerRadius(12)
+          }
+          .padding(.horizontal)
+          .padding(.bottom, 32)
         }
-      }
-      .padding(.top, 12)
-
-      if let configurable = renderer.currentShader as? MSMConfigurableShader {
-        ScrollView {
-          configurable.settingsView()
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-      } else {
-        Text("No configurable settings for current shader")
-          .foregroundStyle(.secondary)
-      }
-
-      Button(action: {
-        renderer.resetInteraction()
-      }) {
-        HStack {
-          Image(systemName: "arrow.counterclockwise")
-          Text("Reset Interaction")
-        }
-        .foregroundColor(.primary)
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(.thinMaterial)
-        .cornerRadius(10)
+        .padding(.top)
       }
     }
-    .padding(.horizontal, 20)
-    .padding(.bottom, 16)
+    .background(.ultraThinMaterial)
+//    .cornerRadius(20, corners: [.topLeft, .topRight])
+    .ignoresSafeArea(edges: .bottom)
   }
+}
+
+extension View {
+  func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+    clipShape(RoundedCorner(radius: radius, corners: corners))
+  }
+}
+
+struct RoundedCorner: Shape {
+  var radius: CGFloat = .infinity
+  var corners: UIRectCorner = .allCorners
+
+  func path(in rect: CGRect) -> Path {
+    let path = UIBezierPath(
+      roundedRect: rect,
+      byRoundingCorners: corners,
+      cornerRadii: CGSize(width: radius, height: radius)
+    )
+    return Path(path.cgPath)
+  }
+}
 //      .border(Color.red, width: 1)
 //
 //    NavigationView {
@@ -65,4 +103,4 @@ struct MetalSharderMuseumSetting: View {
 //      .navigationBarTitleDisplayMode(.inline)
 //    }
 //  }
-}
+//}

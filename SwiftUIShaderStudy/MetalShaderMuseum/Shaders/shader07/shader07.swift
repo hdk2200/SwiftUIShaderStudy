@@ -47,7 +47,7 @@ extension Shader07: MSMConfigurableShader {
             }
           ), in: 0.1...1.5)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Groove Width \(String(format: "%.2f", params.grooveWidth))")
@@ -60,7 +60,7 @@ extension Shader07: MSMConfigurableShader {
             }
           ), in: 0.0...1.0)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Pattern Scale \(String(format: "%.1f", params.patternScale))")
@@ -73,7 +73,7 @@ extension Shader07: MSMConfigurableShader {
             }
           ), in: 1.0...20.0)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Bump Height \(String(format: "%.3f", params.bumpHeight))")
@@ -86,7 +86,7 @@ extension Shader07: MSMConfigurableShader {
             }
           ), in: 0.0...0.2)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
       }
       .padding()
     )

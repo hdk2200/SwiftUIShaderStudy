@@ -55,7 +55,7 @@ extension ShaderBasicFigure: MSMConfigurableShader {
     AnyView(
       HStack {
         Text("Line Width \(String(format: "%.1f", params.lineWidth))")
-          .foregroundStyle(.white)
+          .foregroundStyle(.primary)
         Slider(value: Binding<Double>(
           get: { Double(self.params.lineWidth) },
           set: { newValue in

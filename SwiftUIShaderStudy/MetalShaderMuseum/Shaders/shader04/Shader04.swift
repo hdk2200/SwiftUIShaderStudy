@@ -35,7 +35,7 @@ extension Shader04: MSMConfigurableShader {
     public func settingsView() -> AnyView {
         AnyView(
             Text("No settings available")
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding()
         )
     }

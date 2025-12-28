@@ -22,52 +22,61 @@ struct MetalSharderMuseum: View {
   private let shaderOptions = ShaderOption.available
 
   var body: some View {
-    ZStack {
-      MSMView(renderer: renderer)
-        .edgesIgnoringSafeArea(.all)
+    VStack(spacing: 0) {
+      ZStack {
+        MSMView(renderer: renderer)
+          .edgesIgnoringSafeArea(.all)
 
-      // Shader selection + settings buttons
-      VStack {
-        Spacer()
-        HStack {
+        // Shader selection + settings buttons
+        VStack {
           Spacer()
-          VStack(spacing: 16) {
-            Button(action: { showShaderPicker = true }) {
-              FloatingShaderButtonLabel()
-            }
-            .sheet(isPresented: $showShaderPicker) {
-              ShaderPickerSheet(
-                options: shaderOptions,
-                selectedOptionID: activeShaderID,
-                onSelect: { option in selectShader(option) }
-              )
-              .presentationBackground(.regularMaterial)
-            }
+          HStack {
+            Spacer()
+            VStack(spacing: 16) {
+              Button(action: { showShaderPicker = true }) {
+                FloatingShaderButtonLabel()
+              }
+              .sheet(isPresented: $showShaderPicker) {
+                ShaderPickerSheet(
+                  options: shaderOptions,
+                  selectedOptionID: activeShaderID,
+                  onSelect: { option in selectShader(option) }
+                )
+                .presentationBackground(.regularMaterial)
+              }
 
-            FloatingSettingsButton(isPresented: $showSettings) {
-              MetalSharderMuseumSetting(
-                showSettings: $showSettings,
-                renderer: renderer
-              )
+              FloatingSettingsButton(isPresented: $showSettings) {
+                EmptyView()
+              }
             }
+            .padding(.trailing, 32)
+            .padding(.bottom, 32)
           }
-          .padding(.trailing, 32)
-          .padding(.bottom, 32)
+        }
+
+        VStack {
+          Spacer()
+          let fpsstr = String(format: "%.1f", renderer.fps)
+          Text("fps: \(fpsstr)")
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .background(.ultraThinMaterial)
+            .cornerRadius(4)
+            .padding(.bottom, 24)
         }
       }
+      .frame(maxWidth: .infinity)
+      .frame(maxHeight: showSettings ? UIScreen.main.bounds.height * 0.5 : .infinity)
 
-      //      let frameCount = renderer.frameCount
-      VStack {
-        Spacer()
-        let fpsstr = String(format: "%.1f", renderer.fps)
-        Text("fps: \(fpsstr)")
-          .foregroundStyle(.secondary)
-          .padding(.horizontal, 8)
-          .background(.ultraThinMaterial)
-          .cornerRadius(4)
-          .padding(.bottom, 24)
+      if showSettings {
+        MetalSharderMuseumSetting(
+          showSettings: $showSettings,
+          renderer: renderer
+        )
+        .transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
+    .animation(.spring(), value: showSettings)
 
     .alert(
       "Shader Error",
