@@ -21,7 +21,7 @@ public final class MSMRenderer: NSObject, ObservableObject, MTKViewDelegate {
 
   // MARK: - SwiftUI bindings
   @Published public var currentShader: MSMDrawable
-  @Published public var frameCount: Int = 0
+  public var frameCount: Int = 0
   @Published public var fps: Double = 0
 
   // MARK: - Vertex + Uniform

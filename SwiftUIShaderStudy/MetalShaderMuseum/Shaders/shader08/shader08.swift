@@ -51,20 +51,18 @@ extension Shader08 {
 private struct Shader08SettingsView: View {
   @ObservedObject var shader: Shader08
   
+  
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       // Blend Mode
-      Text("shader.params.blendMode=\(shader.params.blendMode)")
       VStack(alignment: .leading, spacing: 8) {
         Text("Blend Mode")
           .foregroundStyle(.white)
-
+        
         Picker("Blend Mode", selection: Binding<Int>(
           get: { Int(shader.params.blendMode) },
           set: { val in
-            var p = shader.params
-            p.blendMode = Int32(val)
-            shader.params = p
+            shader.params.blendMode = Int32(val)
           }
         )) {
           Text("smax").tag(0)

@@ -20,7 +20,7 @@ struct MetalSharderMuseum: View {
   @State private var shaderPickerError: String?
 
   private let shaderOptions = ShaderOption.available
-  
+
   var body: some View {
     ZStack {
       MSMView(renderer: renderer)
@@ -32,9 +32,6 @@ struct MetalSharderMuseum: View {
         HStack {
           Spacer()
           VStack(spacing: 16) {
-            
-
-
             Button(action: { showShaderPicker = true }) {
               FloatingShaderButtonLabel()
             }
@@ -52,10 +49,6 @@ struct MetalSharderMuseum: View {
                 showSettings: $showSettings,
                 renderer: renderer
               )
-//              .presentationDetents(currentSettingsDetents)
-//              .presentationDragIndicator(.visible)
-//              .presentationBackground(.green)
-//              .environment(\.colorScheme, .auto)
             }
           }
           .padding(.trailing, 32)
@@ -72,6 +65,7 @@ struct MetalSharderMuseum: View {
           .padding(.bottom, 24)
       }
     }
+
     .alert(
       "Shader Error",
       isPresented: Binding(
@@ -204,6 +198,7 @@ private struct ShaderOption: Identifiable {
       matches: { $0 is Shader06 }
     ),
     ShaderOption(
+      id: "Shader07",
       title: "Shader07 (Geometric Sphere)",
       builder: { device in
         guard let library = device.makeDefaultLibrary() else {
@@ -288,4 +283,3 @@ private struct FloatingShaderButtonLabel: View {
     }
   }
 }
-
