@@ -8,7 +8,8 @@ public struct Shader08Parameters {
   var hitThreshold: Float = 0.001
   var maxDist: Float = 48.0
   var blendMode: Int32 = 0 // 0: smax, 1: sub, 2: xor
-  var timeScale: Float = 1.0
+  var timeScale: Float = 0.8
+  var baseAlpha: Float = 0.2
 }
 
 public final class Shader08: MSMDrawable, ObservableObject {
@@ -71,7 +72,19 @@ private struct Shader08SettingsView: View {
         }
         .pickerStyle(.segmented)
       }
-
+      // Base Alpha
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Base Alpha (Ghost): \(String(format: "%.2f", shader.params.baseAlpha))")
+        Slider(value: Binding<Double>(
+          get: { Double(shader.params.baseAlpha) },
+          set: { val in
+            var p = shader.params
+            p.baseAlpha = Float(val)
+            shader.params = p
+          }
+        ), in: 0.0...1.0)
+      }
+      
       // Blend Strength
       VStack(alignment: .leading, spacing: 4) {
         Text("Blend Strength (k): \(String(format: "%.3f", shader.params.blendStrength))")
@@ -126,7 +139,9 @@ private struct Shader08SettingsView: View {
           }
         ), in: 10.0...100.0)
       }
-//      .foregroundStyle(.white)
+//      .foregroundStyle(.primary)
+
+
       
       Spacer()
     }

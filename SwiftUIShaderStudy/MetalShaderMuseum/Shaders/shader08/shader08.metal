@@ -11,9 +11,8 @@ struct Shader08Parameters {
     float maxDist;
     int blendMode; // 0: smax, 1: sub, 2: xor
     float timeScale;
+    float baseAlpha;
 };
-
-// MARK: - SDF Boolean Operations
 
 // Smooth Intersection (smax)
 static float opSmoothIntersection(float d1, float d2, float k) {
@@ -116,6 +115,20 @@ static float3 getLight(float3 p, float3 rd, float time, Shader08Parameters param
     return col;
 }
 
+static float getGhostDist(float3 p, float time, Shader08Parameters params) {
+    // Object A: Central Box
+    float3 pBox = p;
+    pBox = rotate(pBox, float3(1, 1, 0), time * 0.5);
+    float dBox = sdBox(pBox, float3(0.5));
+    
+    // Object B: Orbiting Sphere
+    float3 pSphere = p;
+    float orbitR = 0.8;
+    float3 spherePos = float3(cos(time) * orbitR, sin(time) * orbitR * 0.5, sin(time) * orbitR);
+    float dSphere = sdSphere(pSphere - spherePos, 0.6);
+    
+    return min(dBox, dSphere);
+}
 
 // MARK: - Fragment Shader
 
@@ -132,6 +145,7 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
         p.maxDist = 48.0;
         p.blendMode = 0;
         p.timeScale = 1.0;
+        p.baseAlpha = 0.2;
     }
     
     float2 uv = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
@@ -152,9 +166,10 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
     float angle = uniform->rotation;
     rd = rotate(rd, float3(0,0,1), angle);
     
-    // Ray Marching
+    // Ray Marching (Main Blended Shapes)
     float dO = 0.0;
-    float3 col = float3(0.05, 0.05, 0.08); // Background
+    float3 bgCol = float3(0.05, 0.05, 0.08); // Background
+    float3 col = bgCol;
     
     int steps = p.maxSteps;
     float maxD = p.maxDist;
@@ -176,6 +191,27 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
     if (hit) {
         float3 pPos = ro + rd * dO;
         col = getLight(pPos, rd, uniform->time * p.timeScale, p);
+    } else if (p.baseAlpha > 0.0) {
+        // Ray Marching for Ghost Shapes
+        float dO_g = 0.0;
+        bool ghost_hit = false;
+        for (int i = 0; i < 200; ++i) {
+            if (i >= steps) break;
+            float3 pPos = ro + rd * dO_g;
+            float dS_g = getGhostDist(pPos, uniform->time * p.timeScale, p);
+            if (abs(dS_g) < thres) {
+                ghost_hit = true;
+                break;
+            }
+            dO_g += dS_g;
+            if (dO_g > maxD) break;
+        }
+        
+        if (ghost_hit) {
+            float3 pPos = ro + rd * dO_g;
+            float3 ghostCol = getLight(pPos, rd, uniform->time * p.timeScale, p);
+            col = mix(bgCol, ghostCol, p.baseAlpha);
+        }
     }
     
     col = pow(col, float3(0.4545));
