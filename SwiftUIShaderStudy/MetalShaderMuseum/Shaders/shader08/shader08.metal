@@ -59,12 +59,12 @@ static float opGrooveUnion(float d1, float d2, float ra, float rb) {
 // MARK: - Scene Constants
 constant float3 kBoxSize = float3(0.5);
 constant float3 kBoxRotateAxis = float3(0.5, 0.3, 0.1);
-constant float  kBoxRotateSpeed = 0.5;
+constant float  kBoxRotateSpeed = 0.3;
 
-constant float  kSphereRadius = 0.7;
-constant float3 kSphereOffset = float3(0.0, 0.3, 0.2); // Shift path from center
-constant float3 kSphereOscFreq = float3(0.6, 0.5, 0.3);
-constant float3 kSphereOscAmp = float3(1.5, 0.4, 0.2);
+constant float  kSphereRadius = 0.6;
+constant float3 kSphereOffset = float3(0.1, 0.3, 0.2); // Shift path from center
+constant float3 kSphereOscFreq = float3(0.9, 0.5, 0.8);
+constant float3 kSphereOscAmp = float3(1.2, 0.4, 0.5);
 
 // MARK: - Scene Helpers
 

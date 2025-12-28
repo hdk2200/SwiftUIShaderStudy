@@ -8,7 +8,7 @@ public struct Shader08Parameters {
   var hitThreshold: Float = 0.001
   var maxDist: Float = 48.0
   var blendMode: Int32 = 0 // 0: Union, 1: Intersection, 2: Subtraction, 3: Morph, 4: Steps, 5: Chamfer, 6: Grooves
-  var timeScale: Float = 0.8
+  var timeScale: Float = 1.8
   var baseAlpha: Float = 0.2
 }
 
