@@ -8,7 +8,7 @@ import SwiftUI
 struct MetalSharderMuseum: View {
   @StateObject private var renderer = try! MSMRenderer(
     device: MTLCreateSystemDefaultDevice()!,
-    shader: Shader05(
+    shader: Shader07(
       device: MTLCreateSystemDefaultDevice()!,
       library: MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     )
@@ -44,6 +44,7 @@ struct MetalSharderMuseum: View {
                 selectedOptionID: activeShaderID,
                 onSelect: { option in selectShader(option) }
               )
+              .presentationBackground(.regularMaterial)
             }
 
             FloatingSettingsButton(isPresented: $showSettings) {
@@ -51,8 +52,10 @@ struct MetalSharderMuseum: View {
                 showSettings: $showSettings,
                 renderer: renderer
               )
-              .presentationDetents(currentSettingsDetents)
-              .presentationDragIndicator(.visible)
+//              .presentationDetents(currentSettingsDetents)
+//              .presentationDragIndicator(.visible)
+//              .presentationBackground(.green)
+//              .environment(\.colorScheme, .auto)
             }
           }
           .padding(.trailing, 32)
@@ -200,6 +203,17 @@ private struct ShaderOption: Identifiable {
       },
       matches: { $0 is Shader06 }
     ),
+    ShaderOption(
+      id: "Shader07",
+      title: "Shader07 (Boolean Blends)",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try Shader07(device: device, library: library)
+      },
+      matches: { $0 is Shader07 }
+    ),
   ]
 }
 
@@ -233,7 +247,7 @@ private struct ShaderPickerSheet: View {
                     .foregroundStyle(Color.white.opacity(0.8))
                 }
               }
-              .foregroundColor(.white)
+              .foregroundColor(.primary)
               .padding()
               .frame(maxWidth: .infinity, minHeight: 90)
               .background(

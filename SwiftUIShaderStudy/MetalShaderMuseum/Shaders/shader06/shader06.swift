@@ -5,7 +5,7 @@ public struct Shader06Parameters {
   var sminBlend: Float = 0.03
   var cellSize: Float = 0.35
   var sphereAmplitude: Float = 10.0
-  var oscillationSpeed: Float = 1.3
+  var oscillationSpeed: Float = 0.01
   var sphereRadius: Float = 0.05
 }
 
@@ -72,7 +72,7 @@ extension Shader06: MSMConfigurableShader {
               updated.sphereAmplitude = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 1.0...15.0)
+          ), in: 1.0...10.0)
         }
         .foregroundStyle(.white)
 
@@ -85,7 +85,7 @@ extension Shader06: MSMConfigurableShader {
               updated.oscillationSpeed = Float(newValue)
               self.setParameters(updated)
             }
-          ), in: 0.01...3.0)
+          ), in: 0.001...0.5)
         }
         .foregroundStyle(.white)
 
