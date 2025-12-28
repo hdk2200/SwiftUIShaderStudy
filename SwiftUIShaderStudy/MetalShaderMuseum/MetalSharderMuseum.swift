@@ -49,8 +49,8 @@ struct MetalSharderMuseum: View {
                 EmptyView()
               }
             }
-            .padding(.trailing, 32)
-            .padding(.bottom, 32)
+            .padding(.trailing, 16)
+            .padding(.bottom, 16)
           }
         }
 

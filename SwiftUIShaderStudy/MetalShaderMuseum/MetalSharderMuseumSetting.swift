@@ -22,10 +22,11 @@ struct MetalSharderMuseumSetting: View {
             .font(.title2)
         }
       }
-      .padding()
+      .padding(.horizontal, 8)
+      .padding(.vertical, 8)
       .background(.thinMaterial)
 
-      ScrollView {
+        VStack(spacing: 8) {
         VStack(spacing: 24) {
           if let configurable = renderer.currentShader as? MSMConfigurableShader {
             configurable.settingsView()
@@ -53,7 +54,7 @@ struct MetalSharderMuseumSetting: View {
             .cornerRadius(12)
           }
           .padding(.horizontal)
-          .padding(.bottom, 32)
+          .padding(.bottom, 48)
         }
         .padding(.top)
       }
