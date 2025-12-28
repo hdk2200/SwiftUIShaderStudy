@@ -7,7 +7,7 @@ public struct Shader08Parameters {
   var maxSteps: Int32 = 64
   var hitThreshold: Float = 0.001
   var maxDist: Float = 48.0
-  var blendMode: Int32 = 0 // 0: smax, 1: sub, 2: xor
+  var blendMode: Int32 = 0 // 0: Union, 1: Intersection, 2: Subtraction, 3: Morph, 4: Steps, 5: Chamfer, 6: Grooves
   var timeScale: Float = 0.8
   var baseAlpha: Float = 0.2
 }
@@ -66,9 +66,13 @@ private struct Shader08SettingsView: View {
             shader.params.blendMode = Int32(val)
           }
         )) {
-          Text("smax").tag(0)
-          Text("Subtraction ").tag(1)
-          Text("XOR ").tag(2)
+          Text("Uni").tag(0)
+          Text("Int").tag(1)
+          Text("Sub").tag(2)
+          Text("Mor").tag(3)
+          Text("Stp").tag(4)
+          Text("Chm").tag(5)
+          Text("Grv").tag(6)
         }
         .pickerStyle(.segmented)
       }

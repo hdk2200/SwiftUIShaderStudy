@@ -14,6 +14,12 @@ struct Shader08Parameters {
     float baseAlpha;
 };
 
+// Smooth Union (smin)
+static float opSmoothUnion(float d1, float d2, float k) {
+    float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    return mix(d2, d1, h) - k * h * (1.0 - h);
+}
+
 // Smooth Intersection (smax)
 static float opSmoothIntersection(float d1, float d2, float k) {
     float h = clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
@@ -26,19 +32,39 @@ static float opSmoothSubtraction(float d1, float d2, float k) {
     return mix(d2, -d1, h) + k * h * (1.0 - h);
 }
 
-// Smooth XOR (Exclusive OR)
-static float opSmoothXor(float d1, float d2, float k) {
-    float h_union = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
-    float s_union = mix(d2, d1, h_union) - k * h_union * (1.0 - h_union);
-    
-    float h_inter = clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
-    float s_inter = mix(d2, d1, h_inter) + k * h_inter * (1.0 - h_inter);
-    
-    // Smooth Subtraction: Union - Intersection
-    float h_sub = clamp(0.5 - 0.5 * (s_union + s_inter) / k, 0.0, 1.0);
-    return mix(s_union, -s_inter, h_sub) + k * h_sub * (1.0 - h_sub);
+// Morph
+static float opMorph(float d1, float d2, float t) {
+    return mix(d1, d2, t);
 }
 
+// Stepped Union
+static float opSteppedUnion(float d1, float d2, float k, float n) {
+    float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    h = floor(h * n) / n;
+    return mix(d2, d1, h) - k * h * (1.0 - h);
+}
+
+// Chamfer Union
+static float opChamferUnion(float d1, float d2, float r) {
+    return min(min(d1, d2), (d1 + d2 - r) * 0.7071067);
+}
+
+// Groove Union
+static float opGrooveUnion(float d1, float d2, float ra, float rb) {
+    float d = min(d1, d2);
+    return max(d, ra - abs(d1 - d2 - rb));
+}
+
+
+// MARK: - Scene Constants
+constant float3 kBoxSize = float3(0.5);
+constant float3 kBoxRotateAxis = float3(0.5, 0.3, 0.1);
+constant float  kBoxRotateSpeed = 0.5;
+
+constant float  kSphereRadius = 0.7;
+constant float3 kSphereOffset = float3(0.0, 0.3, 0.2); // Shift path from center
+constant float3 kSphereOscFreq = float3(0.6, 0.5, 0.3);
+constant float3 kSphereOscAmp = float3(1.5, 0.4, 0.2);
 
 // MARK: - Scene Helpers
 
@@ -60,29 +86,38 @@ static float3 rotate(float3 p, float3 axis, float angle) {
 }
 
 // Scene Description
-// Changed 'constant Shader08Parameters &params' to value 'Shader08Parameters params'
-// to allow passing both constant buffer values and thread-local copies.
 static float getDist(float3 p, float time, Shader08Parameters params) {
     
     // Object A: Central Box
     float3 pBox = p;
-    pBox = rotate(pBox, float3(1, 1, 0), time * 0.5);
-    float dBox = sdBox(pBox, float3(0.5));
+    pBox = rotate(pBox, kBoxRotateAxis, time * kBoxRotateSpeed);
+    float dBox = sdBox(pBox, kBoxSize);
     
-    // Object B: Orbiting Sphere
+    // Object B: Oscillating Sphere (Passes through and returns)
     float3 pSphere = p;
-    float orbitR = 0.8;
-    float3 spherePos = float3(cos(time) * orbitR, sin(time) * orbitR * 0.5, sin(time) * orbitR);
-    float dSphere = sdSphere(pSphere - spherePos, 0.6);
+    float3 spherePos = kSphereOffset + float3(
+        sin(time * kSphereOscFreq.x) * kSphereOscAmp.x,
+        sin(time * kSphereOscFreq.y) * kSphereOscAmp.y,
+        cos(time * kSphereOscFreq.z) * kSphereOscAmp.z
+    );
+    float dSphere = sdSphere(pSphere - spherePos, kSphereRadius);
     
     // Apply selected blend
     float d = dBox;
     if (params.blendMode == 0) {
-        d = opSmoothIntersection(dBox, dSphere, params.blendStrength);
+        d = opSmoothUnion(dBox, dSphere, params.blendStrength);
     } else if (params.blendMode == 1) {
+        d = opSmoothIntersection(dBox, dSphere, params.blendStrength);
+    } else if (params.blendMode == 2) {
         d = opSmoothSubtraction(dSphere, dBox, params.blendStrength);
+    } else if (params.blendMode == 3) {
+        d = opMorph(dBox, dSphere, params.blendStrength);
+    } else if (params.blendMode == 4) {
+        d = opSteppedUnion(dBox, dSphere, params.blendStrength, 8.0);
+    } else if (params.blendMode == 5) {
+        d = opChamferUnion(dBox, dSphere, params.blendStrength);
     } else {
-        d = opSmoothXor(dBox, dSphere, params.blendStrength);
+        d = opGrooveUnion(dBox, dSphere, params.blendStrength * 0.3, params.blendStrength * 0.1);
     }
     
     return d;
@@ -118,14 +153,17 @@ static float3 getLight(float3 p, float3 rd, float time, Shader08Parameters param
 static float getGhostDist(float3 p, float time, Shader08Parameters params) {
     // Object A: Central Box
     float3 pBox = p;
-    pBox = rotate(pBox, float3(1, 1, 0), time * 0.5);
-    float dBox = sdBox(pBox, float3(0.5));
+    pBox = rotate(pBox, kBoxRotateAxis, time * kBoxRotateSpeed);
+    float dBox = sdBox(pBox, kBoxSize);
     
-    // Object B: Orbiting Sphere
+    // Object B: Oscillating Sphere
     float3 pSphere = p;
-    float orbitR = 0.8;
-    float3 spherePos = float3(cos(time) * orbitR, sin(time) * orbitR * 0.5, sin(time) * orbitR);
-    float dSphere = sdSphere(pSphere - spherePos, 0.6);
+    float3 spherePos = kSphereOffset + float3(
+        sin(time * kSphereOscFreq.x) * kSphereOscAmp.x,
+        sin(time * kSphereOscFreq.y) * kSphereOscAmp.y,
+        cos(time * kSphereOscFreq.z) * kSphereOscAmp.z
+    );
+    float dSphere = sdSphere(pSphere - spherePos, kSphereRadius);
     
     return min(dBox, dSphere);
 }
@@ -144,7 +182,7 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
         p.hitThreshold = 0.001;
         p.maxDist = 48.0;
         p.blendMode = 0;
-        p.timeScale = 1.0;
+        p.timeScale = 0.8;
         p.baseAlpha = 0.2;
     }
     
@@ -164,7 +202,7 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
     
     float3 rd = normalize(float3(uv, -1.5));
     float angle = uniform->rotation;
-    rd = rotate(rd, float3(0,0,1), angle);
+    rd = rotate(rd, float3(1,0,1), angle);
     
     // Ray Marching (Main Blended Shapes)
     float dO = 0.0;
