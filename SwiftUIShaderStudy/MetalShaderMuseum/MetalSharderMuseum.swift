@@ -8,7 +8,7 @@ import SwiftUI
 struct MetalSharderMuseum: View {
   @StateObject private var renderer = try! MSMRenderer(
     device: MTLCreateSystemDefaultDevice()!,
-    shader: Shader07(
+    shader: Shader08(
       device: MTLCreateSystemDefaultDevice()!,
       library: MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     )
@@ -204,8 +204,7 @@ private struct ShaderOption: Identifiable {
       matches: { $0 is Shader06 }
     ),
     ShaderOption(
-      id: "Shader07",
-      title: "Shader07 (Boolean Blends)",
+      title: "Shader07 (Geometric Sphere)",
       builder: { device in
         guard let library = device.makeDefaultLibrary() else {
           throw ShaderSelectionError.missingDefaultLibrary
@@ -213,6 +212,17 @@ private struct ShaderOption: Identifiable {
         return try Shader07(device: device, library: library)
       },
       matches: { $0 is Shader07 }
+    ),
+    ShaderOption(
+      id: "Shader08",
+      title: "Shader08 (Boolean Blends)",
+      builder: { device in
+        guard let library = device.makeDefaultLibrary() else {
+          throw ShaderSelectionError.missingDefaultLibrary
+        }
+        return try Shader08(device: device, library: library)
+      },
+      matches: { $0 is Shader08 }
     ),
   ]
 }
@@ -249,7 +259,7 @@ private struct ShaderPickerSheet: View {
               }
               .foregroundColor(.primary)
               .padding()
-              .frame(maxWidth: .infinity, minHeight: 90)
+              .frame(maxWidth: .infinity, minHeight: 45)
               .background(
                 RoundedRectangle(cornerRadius: 14)
                   .fill(isSelected ? Color.accentColor.opacity(0.5) : Color.white.opacity(0.15))

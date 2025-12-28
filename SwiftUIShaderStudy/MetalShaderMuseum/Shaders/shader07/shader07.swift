@@ -1,22 +1,18 @@
 import MetalKit
 import SwiftUI
-import Combine
 
 public struct Shader07Parameters {
-  var blendStrength: Float = 0.1
-  var maxSteps: Int32 = 64
-  var hitThreshold: Float = 0.001
-  var maxDist: Float = 48.0
-  var blendMode: Int32 = 0 // 0: smax, 1: sub, 2: xor
-  var timeScale: Float = 1.0
+  var radius: Float = 0.8
+  var grooveWidth: Float = 0.8
+  var patternScale: Float = 5.0
+  var bumpHeight: Float = 0.05
 }
 
-public final class Shader07: MSMDrawable, ObservableObject {
+public final class Shader07: MSMDrawable {
   public typealias Parameters = Shader07Parameters
 
   public let pipelineState: MTLRenderPipelineState
-  @Published var params = Shader07Parameters()
-  private let startDate = Date()
+  private var params = Shader07Parameters()
 
   public init(device: MTLDevice, library: MTLLibrary) throws {
     let descriptor = MTLRenderPipelineDescriptor()
@@ -38,100 +34,67 @@ public final class Shader07: MSMDrawable, ObservableObject {
 
 extension Shader07: MSMConfigurableShader {
   public func settingsView() -> AnyView {
-    AnyView(Shader07SettingsView(shader: self))
+    AnyView(
+      VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Radius \(String(format: "%.2f", params.radius))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.radius) },
+            set: { newValue in
+              var updated = self.params
+              updated.radius = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.1...1.5)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Groove Width \(String(format: "%.2f", params.grooveWidth))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.grooveWidth) },
+            set: { newValue in
+              var updated = self.params
+              updated.grooveWidth = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.0...1.0)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Pattern Scale \(String(format: "%.1f", params.patternScale))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.patternScale) },
+            set: { newValue in
+              var updated = self.params
+              updated.patternScale = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 1.0...20.0)
+        }
+        .foregroundStyle(.white)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Bump Height \(String(format: "%.3f", params.bumpHeight))")
+          Slider(value: Binding<Double>(
+            get: { Double(self.params.bumpHeight) },
+            set: { newValue in
+              var updated = self.params
+              updated.bumpHeight = Float(newValue)
+              self.setParameters(updated)
+            }
+          ), in: 0.0...0.2)
+        }
+        .foregroundStyle(.white)
+      }
+      .padding()
+    )
   }
 }
 
 extension Shader07 {
   public var preferredSettingsDetents: [PresentationDetent] {
-    [.fraction(0.55), .large]
-  }
-}
-
-private struct Shader07SettingsView: View {
-  @ObservedObject var shader: Shader07
-  
-  var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      // Blend Mode
-      Text("shader.params.blendMode=\(shader.params.blendMode)")
-      VStack(alignment: .leading, spacing: 8) {
-        Text("Blend Mode")
-          .foregroundStyle(.white)
-
-        Picker("Blend Mode", selection: Binding<Int>(
-          get: { Int(shader.params.blendMode) },
-          set: { val in
-            var p = shader.params
-            p.blendMode = Int32(val)
-            shader.params = p
-          }
-        )) {
-          Text("smax").tag(0)
-          Text("Subtraction ").tag(1)
-          Text("XOR ").tag(2)
-        }
-        .pickerStyle(.segmented)
-      }
-
-      // Blend Strength
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Blend Strength (k): \(String(format: "%.3f", shader.params.blendStrength))")
-        Slider(value: Binding<Double>(
-          get: { Double(shader.params.blendStrength) },
-          set: { val in
-            var p = shader.params
-            p.blendStrength = Float(val)
-            shader.params = p
-          }
-        ), in: 0.001...1.0)
-      }
-      .foregroundStyle(.white)
-
-      // Max Steps
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Max Steps: \(shader.params.maxSteps)")
-        Slider(value: Binding<Double>(
-          get: { Double(shader.params.maxSteps) },
-          set: { val in
-            var p = shader.params
-            p.maxSteps = Int32(val)
-            shader.params = p
-          }
-        ), in: 10...200, step: 1)
-      }
-      .foregroundStyle(.white)
-
-      // Hit Threshold
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Hit Threshold: \(String(format: "%.4f", shader.params.hitThreshold))")
-        Slider(value: Binding<Double>(
-          get: { Double(shader.params.hitThreshold) },
-          set: { val in
-            var p = shader.params
-            p.hitThreshold = Float(val)
-            shader.params = p
-          }
-        ), in: 0.0001...0.01)
-      }
-      .foregroundStyle(.white)
-
-      // Max Dist
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Max Dist: \(String(format: "%.1f", shader.params.maxDist))")
-        Slider(value: Binding<Double>(
-          get: { Double(shader.params.maxDist) },
-          set: { val in
-            var p = shader.params
-            p.maxDist = Float(val)
-            shader.params = p
-          }
-        ), in: 10.0...100.0)
-      }
-      .foregroundStyle(.white)
-      
-      Spacer()
-    }
-    .padding()
+    [.fraction(0.4), .large]
   }
 }
