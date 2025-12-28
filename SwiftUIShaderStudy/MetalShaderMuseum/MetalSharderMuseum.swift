@@ -14,9 +14,14 @@ struct MetalSharderMuseum: View {
     )
   )
 
-  @State private var showSettings = false
+  private enum BottomViewState {
+    case none
+    case settings
+    case shaderPicker
+  }
+
+  @State private var bottomViewState: BottomViewState = .none
   @State private var lineWidth: Float = 1.0
-  @State private var showShaderPicker = false
   @State private var shaderPickerError: String?
 
   private let shaderOptions = ShaderOption.available
@@ -33,19 +38,22 @@ struct MetalSharderMuseum: View {
           HStack {
             Spacer()
             VStack(spacing: 16) {
-              Button(action: { showShaderPicker = true }) {
+              Button(action: {
+                withAnimation(.spring()) {
+                  bottomViewState = (bottomViewState == .shaderPicker) ? .none : .shaderPicker
+                }
+              }) {
                 FloatingShaderButtonLabel()
               }
-              .sheet(isPresented: $showShaderPicker) {
-                ShaderPickerSheet(
-                  options: shaderOptions,
-                  selectedOptionID: activeShaderID,
-                  onSelect: { option in selectShader(option) }
-                )
-                .presentationBackground(.regularMaterial)
-              }
 
-              FloatingSettingsButton(isPresented: $showSettings) {
+              FloatingSettingsButton(isPresented: Binding(
+                get: { bottomViewState == .settings },
+                set: { val in
+                  withAnimation(.spring()) {
+                    bottomViewState = val ? .settings : .none
+                  }
+                }
+              )) {
                 EmptyView()
               }
             }
@@ -66,17 +74,32 @@ struct MetalSharderMuseum: View {
         }
       }
       .frame(maxWidth: .infinity)
-      .frame(maxHeight: showSettings ? UIScreen.main.bounds.height * 0.5 : .infinity)
+      .frame(maxHeight: bottomViewState != .none ? UIScreen.main.bounds.height * 0.5 : .infinity)
 
-      if showSettings {
+      if bottomViewState == .settings {
         MetalSharderMuseumSetting(
-          showSettings: $showSettings,
+          showSettings: Binding(
+            get: { bottomViewState == .settings },
+            set: { val in bottomViewState = val ? .settings : .none }
+          ),
           renderer: renderer
+        )
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+      } else if bottomViewState == .shaderPicker {
+        ShaderPickerView(
+          options: shaderOptions,
+          selectedOptionID: activeShaderID,
+          onSelect: { option in selectShader(option) },
+          onClose: {
+            withAnimation(.spring()) {
+              bottomViewState = .none
+            }
+          }
         )
         .transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
-    .animation(.spring(), value: showSettings)
+    .animation(.spring(), value: bottomViewState)
 
     .alert(
       "Shader Error",
@@ -113,7 +136,9 @@ struct MetalSharderMuseum: View {
     do {
       let shader = try option.builder(renderer.device)
       renderer.changeShader(to: shader)
-      showShaderPicker = false
+      withAnimation(.spring()) {
+        bottomViewState = .none
+      }
     } catch {
       print("Failed to change shader: \(error)")
       shaderPickerError = error.localizedDescription
@@ -234,51 +259,73 @@ private struct ShaderOption: Identifiable {
   ]
 }
 
-private struct ShaderPickerSheet: View {
+private struct ShaderPickerView: View {
   let options: [ShaderOption]
   let selectedOptionID: String?
   let onSelect: (ShaderOption) -> Void
+  let onClose: () -> Void
 
-  private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 2)
+  private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
-      Text("Select Shader")
-        .font(.headline)
-        .padding(.horizontal, 4)
+    VStack(spacing: 0) {
+      HStack {
+        Text("Select Shader")
+          .font(.headline)
+        Spacer()
+        Button(action: onClose) {
+          Image(systemName: "xmark.circle.fill")
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(.secondary)
+            .font(.title2)
+        }
+      }
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
+      .background(.thinMaterial)
 
       ScrollView {
-        LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(options) { option in
-            Button(action: { onSelect(option) }) {
-              VStack {
+        LazyVGrid(columns: columns, spacing: 12) {
+          ForEach(options) { option in
+            Button(action: {
+              withAnimation(.spring()) {
+                onSelect(option)
+              }
+            }) {
+              VStack(spacing: 4) {
                 Text(option.title)
-                  .font(.title3)
+                  .font(.subheadline)
                   .fontWeight(.semibold)
-                  .frame(maxWidth: .infinity, alignment: .center)
-                  .padding(.bottom, 4)
+                  .multilineTextAlignment(.center)
+                  .fixedSize(horizontal: false, vertical: true)
+
                 if option.id == (selectedOptionID ?? "") {
                   Text("Selected")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 }
               }
               .foregroundColor(.primary)
-              .padding()
-              .frame(maxWidth: .infinity, minHeight: 45)
+              .padding(.vertical, 12)
+              .padding(.horizontal, 8)
+              .frame(maxWidth: .infinity, minHeight: 60)
               .background(
-                RoundedRectangle(cornerRadius: 14)
-                  .fill(option.id == (selectedOptionID ?? "") ? AnyShapeStyle(Color.accentColor.opacity(0.3)) : AnyShapeStyle(.ultraThinMaterial))
+                RoundedRectangle(cornerRadius: 12)
+                  .fill(option.id == (selectedOptionID ?? "") ? AnyShapeStyle(Color.accentColor.opacity(0.2)) : AnyShapeStyle(.ultraThinMaterial))
+              )
+              .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                  .strokeBorder(option.id == (selectedOptionID ?? "") ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
               )
             }
             .buttonStyle(.plain)
           }
         }
-        .padding(.top, 8)
+        .padding(16)
       }
     }
-    .padding()
-    .presentationDetents([.medium, .large])
+    .background(.ultraThinMaterial)
+    .ignoresSafeArea(edges: .bottom)
   }
 }
 

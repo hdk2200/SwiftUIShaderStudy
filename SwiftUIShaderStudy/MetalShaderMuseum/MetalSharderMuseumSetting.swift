@@ -26,8 +26,8 @@ struct MetalSharderMuseumSetting: View {
       .padding(.vertical, 8)
       .background(.thinMaterial)
 
+      ScrollView {
         VStack(spacing: 8) {
-        VStack(spacing: 24) {
           if let configurable = renderer.currentShader as? MSMConfigurableShader {
             configurable.settingsView()
               .frame(maxWidth: .infinity, alignment: .leading)
