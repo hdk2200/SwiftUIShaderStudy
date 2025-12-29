@@ -12,8 +12,8 @@ public struct Shader08Parameters {
   var baseAlpha: Float = 0.2
   var boxSize: Float = 0.5
   var sphereRadius: Float = 0.6
-  var cubeSpeed: Float = 0.3
-  var sphereSpeed: Float = 0.2
+  var cubeSpeed: Float = 0.1
+  var sphereSpeed: Float = 0.1
   var sphereOffset: SIMD3<Float> = SIMD3<Float>(0.1, 0.3, 0.2)
 }
 
@@ -103,7 +103,7 @@ private struct Shader08SettingsView: View {
             p.boxSize = Float(val)
             shader.params = p
           }
-        ), in: 0.1...1.5)
+        ), in: 0.1...1.5, step: 0.1)
       }
       
       // Sphere Radius
@@ -116,7 +116,7 @@ private struct Shader08SettingsView: View {
             p.sphereRadius = Float(val)
             shader.params = p
           }
-        ), in: 0.1...1.5)
+        ), in: 0.1...1.5, step: 0.1)
       }
       
       // Cube Speed
@@ -129,7 +129,7 @@ private struct Shader08SettingsView: View {
             p.cubeSpeed = Float(val)
             shader.params = p
           }
-        ), in: 0.0...2.0)
+        ), in: 0.0...1.2, step: 0.1)
       }
 
       // Sphere Speed
@@ -142,7 +142,7 @@ private struct Shader08SettingsView: View {
             p.sphereSpeed = Float(val)
             shader.params = p
           }
-        ), in: 0.0...2.0)
+        ), in: 0.0...1.2, step: 0.1)
       }
       
       // Sphere Offset
@@ -152,7 +152,7 @@ private struct Shader08SettingsView: View {
           .foregroundStyle(.secondary)
         
         HStack {
-          Text("X: \(String(format: "%.2f", shader.params.sphereOffset.x))")
+          Text("X: \(String(format: "%2.1f", shader.params.sphereOffset.x))")
           Slider(value: Binding<Double>(
             get: { Double(shader.params.sphereOffset.x) },
             set: { val in
@@ -160,10 +160,10 @@ private struct Shader08SettingsView: View {
               p.sphereOffset.x = Float(val)
               shader.params = p
             }
-          ), in: -2.0...2.0)
+          ), in: -1.0...1.0, step: 0.1)
         }
         HStack {
-          Text("Y: \(String(format: "%.2f", shader.params.sphereOffset.y))")
+          Text("Y: \(String(format: "%2.1f", shader.params.sphereOffset.y))")
           Slider(value: Binding<Double>(
             get: { Double(shader.params.sphereOffset.y) },
             set: { val in
@@ -171,10 +171,10 @@ private struct Shader08SettingsView: View {
               p.sphereOffset.y = Float(val)
               shader.params = p
             }
-          ), in: -1.0...1.0)
+          ), in: -1.0...1.0, step: 0.1)
         }
         HStack {
-          Text("Z: \(String(format: "%.2f", shader.params.sphereOffset.z))")
+          Text("Z: \(String(format: "%2.1f", shader.params.sphereOffset.z))")
           Slider(value: Binding<Double>(
             get: { Double(shader.params.sphereOffset.z) },
             set: { val in
@@ -182,7 +182,7 @@ private struct Shader08SettingsView: View {
               p.sphereOffset.z = Float(val)
               shader.params = p
             }
-          ), in: -1.0...1.0)
+          ), in: -1.0...1.0, step: 0.1)
         }
       }
 
@@ -243,7 +243,7 @@ private struct Shader08SettingsView: View {
 
       // Max Dist
       VStack(alignment: .leading, spacing: 4) {
-        Text("Max Dist: \(String(format: "%.1f", shader.params.maxDist))")
+        Text("Max Dist: \(String(format: "%2.1f", shader.params.maxDist))")
         Slider(value: Binding<Double>(
           get: { Double(shader.params.maxDist) },
           set: { val in
