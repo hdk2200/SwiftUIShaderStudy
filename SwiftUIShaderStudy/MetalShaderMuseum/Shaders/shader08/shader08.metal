@@ -12,7 +12,17 @@ struct Shader08Parameters {
     int blendMode; // 0: smax, 1: sub, 2: xor
     float timeScale;
     float baseAlpha;
+    float boxSize;
+    float sphereRadius;
+    float cubeSpeed;
+    float sphereSpeed;
+    float3 sphereOffset;
 };
+
+// Triangle Wave for snappy movement
+static float triWave(float t) {
+    return abs(fract(t) - 0.5) * 4.0 - 1.0;
+}
 
 // Smooth Union (smin)
 static float opSmoothUnion(float d1, float d2, float k) {
@@ -57,12 +67,9 @@ static float opGrooveUnion(float d1, float d2, float ra, float rb) {
 
 
 // MARK: - Scene Constants
-constant float3 kBoxSize = float3(0.5);
 constant float3 kBoxRotateAxis = float3(0.5, 0.3, 0.1);
 constant float  kBoxRotateSpeed = 0.3;
 
-constant float  kSphereRadius = 0.6;
-constant float3 kSphereOffset = float3(0.1, 0.3, 0.2); // Shift path from center
 constant float3 kSphereOscFreq = float3(0.9, 0.5, 0.8);
 constant float3 kSphereOscAmp = float3(1.2, 0.4, 0.5);
 
@@ -90,17 +97,18 @@ static float getDist(float3 p, float time, Shader08Parameters params) {
     
     // Object A: Central Box
     float3 pBox = p;
-    pBox = rotate(pBox, kBoxRotateAxis, time * kBoxRotateSpeed);
-    float dBox = sdBox(pBox, kBoxSize);
+    pBox = rotate(pBox, kBoxRotateAxis, time * params.cubeSpeed);
+    float dBox = sdBox(pBox, float3(params.boxSize));
     
     // Object B: Oscillating Sphere (Passes through and returns)
     float3 pSphere = p;
-    float3 spherePos = kSphereOffset + float3(
-        sin(time * kSphereOscFreq.x) * kSphereOscAmp.x,
-        sin(time * kSphereOscFreq.y) * kSphereOscAmp.y,
-        cos(time * kSphereOscFreq.z) * kSphereOscAmp.z
+    float sphereTime = time * params.sphereSpeed;
+    float3 spherePos = params.sphereOffset + float3(
+        triWave(sphereTime * kSphereOscFreq.x) * kSphereOscAmp.x,
+        sin(sphereTime * kSphereOscFreq.y) * kSphereOscAmp.y,
+        cos(sphereTime * kSphereOscFreq.z) * kSphereOscAmp.z
     );
-    float dSphere = sdSphere(pSphere - spherePos, kSphereRadius);
+    float dSphere = sdSphere(pSphere - spherePos, params.sphereRadius);
     
     // Apply selected blend
     float d = dBox;
@@ -153,17 +161,18 @@ static float3 getLight(float3 p, float3 rd, float time, Shader08Parameters param
 static float getGhostDist(float3 p, float time, Shader08Parameters params) {
     // Object A: Central Box
     float3 pBox = p;
-    pBox = rotate(pBox, kBoxRotateAxis, time * kBoxRotateSpeed);
-    float dBox = sdBox(pBox, kBoxSize);
+    pBox = rotate(pBox, kBoxRotateAxis, time * params.cubeSpeed);
+    float dBox = sdBox(pBox, float3(params.boxSize));
     
     // Object B: Oscillating Sphere
     float3 pSphere = p;
-    float3 spherePos = kSphereOffset + float3(
-        sin(time * kSphereOscFreq.x) * kSphereOscAmp.x,
-        sin(time * kSphereOscFreq.y) * kSphereOscAmp.y,
-        cos(time * kSphereOscFreq.z) * kSphereOscAmp.z
+    float sphereTime = time * params.sphereSpeed;
+    float3 spherePos = params.sphereOffset + float3(
+        triWave(sphereTime * kSphereOscFreq.x) * kSphereOscAmp.x,
+        sin(sphereTime * kSphereOscFreq.y) * kSphereOscAmp.y,
+        cos(sphereTime * kSphereOscFreq.z) * kSphereOscAmp.z
     );
-    float dSphere = sdSphere(pSphere - spherePos, kSphereRadius);
+    float dSphere = sdSphere(pSphere - spherePos, params.sphereRadius);
     
     return min(dBox, dSphere);
 }
@@ -184,6 +193,11 @@ fragment float4 shader08Fragment(VertexOut data [[stage_in]],
         p.blendMode = 0;
         p.timeScale = 0.8;
         p.baseAlpha = 0.2;
+        p.boxSize = 0.5;
+        p.sphereRadius = 0.6;
+        p.cubeSpeed = 0.3;
+        p.sphereSpeed = 0.2;
+        p.sphereOffset = float3(0.1, 0.3, 0.2);
     }
     
     float2 uv = (data.position.xy * 2.0 - data.vsize) / min(data.vsize.x, data.vsize.y);
